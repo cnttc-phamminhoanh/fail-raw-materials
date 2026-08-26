@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fail Raw Materials</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fail_materials/fail_materials.css" />
+  <link rel="icon" type="image/png" href="favicons/itgi-favicon2.png">
+</head>
+<body>
+  <main class="page-shell">
+    <header class="topbar">
+      <div class="brand-block">
+        <div class="brand-mark"><span></span><span></span><span></span></div>
+        <div>
+          <div class="eyebrow">RAW MATERIAL CONTROL</div>
+          <h1>Solution for Handling <strong>FAIL</strong> Raw Materials</h1>
+        </div>
+      </div>
+
+      <div class="header-stats" aria-label="Summary">
+        <div class="stat-chip">
+          <span class="stat-label">Records</span>
+          <strong id="rowCount">0</strong>
+        </div>
+        <div class="stat-chip warning">
+          <span class="stat-label">Pending</span>
+          <strong id="pendingCount">0</strong>
+        </div>
+      </div>
+    </header>
+
+    <section class="control-bar">
+      <div class="control-title">
+        <span class="live-dot"></span>
+        <div>
+          <strong>FAIL Material Queue</strong>
+          <small>Review and define the handling solution</small>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label class="field">
+          <span>Time</span>
+          <input id="timeFilter" type="date" />
+        </label>
+        <label class="field search-field">
+          <span>Search</span>
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35m1.35-5.4a6.75 6.75 0 1 1-13.5 0 6.75 6.75 0 0 1 13.5 0Z"/></svg>
+            <input id="searchInput" type="search" placeholder="Supplier / PO / Material / Lot..." />
+          </div>
+        </label>
+        <button id="searchBtn" class="primary-btn" type="button">Search</button>
+        <button id="resetBtn" class="ghost-btn" type="button">Reset</button>
+      </div>
+    </section>
+
+    <section class="table-card">
+      <div class="table-toolbar">
+        <div class="table-guide">
+          <span class="guide-icon">↔</span>
+          <!-- <span><b>Table preview</b> — horizontal scroll is available for all columns.</span> -->
+          <span class="guide-separator"></span>
+          <span>Drag a column edge to resize.</span>
+        </div>
+        <div class="table-meta">
+          <span class="legend"><i class="legend-green"></i>Handling recorded</span>
+          <span class="legend"><i class="legend-red"></i>Pending</span>
+        </div>
+      </div>
+
+      <div id="tableScroll" class="table-scroll" aria-label="FAIL raw materials table">
+        <table id="failTable">
+          <colgroup id="columnGroup"></colgroup>
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <!-- Phân trang - Thêm vào đây -->
+      <div class="pagination-container">
+        <div class="pagination-info">
+          <span id="paginationInfo">Showing 0 - 0 of 0 records</span>
+        </div>
+        <div class="pagination-controls">
+          <button id="prevPageBtn" class="pagination-btn" disabled>Previous</button>
+          <span id="pageInfo">Page 1 / 1</span>
+          <button id="nextPageBtn" class="pagination-btn" disabled>Next</button>
+        </div>
+        <div class="pagination-limit">
+          <label>
+            <span>Rows per page:</span>
+            <select id="limitSelect">
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+              <option value="300">300</option>
+              <option value="400">400</option>
+              <option value="500">500</option>
+            </select>
+          </label>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="solutionModal" class="modal-backdrop" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <div>
+          <div class="modal-kicker">SOLUTION WORKFLOW</div>
+          <h2 id="modalTitle">Update Solution</h2>
+          <p>Save a handling decision for this temporary receipt.</p>
+        </div>
+        <button id="closeModalBtn" class="icon-btn" type="button" aria-label="Close">×</button>
+      </div>
+
+      <div id="modalInfo" class="record-info"></div>
+
+      <form id="solutionForm">
+        <label for="solutionSelect">Solution</label>
+        <select id="solutionSelect" required></select>
+
+        <!-- <label for="solutionNote">Note <span>Optional</span></label>
+        <textarea id="solutionNote" rows="3" placeholder="Add a short note if needed..."></textarea> -->
+
+        <div class="modal-meta">
+          <div><span>Updater</span><strong>ADMIN</strong></div>
+          <div><span>Action</span><strong id="modalAction">INSERT</strong></div>
+        </div>
+
+        <div class="edit-rule">
+          <span>⏱</span>
+          <p>After the first save, editing remains available until 23:59:59 today.</p>
+        </div>
+
+        <div class="modal-actions">
+          <button id="cancelBtn" class="secondary-btn" type="button">Cancel</button>
+          <button class="primary-btn" type="submit">Save Solution</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="fail_materials/fail_materials.js"></script>
+</body>
+</html>
