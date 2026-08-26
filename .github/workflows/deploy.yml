@@ -8,32 +8,33 @@ concurrency:
   cancel-in-progress: true
 jobs:
   lint:
-    name: Lint
-    runs-on: self-hosted
-    steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-      - name: Show lint information
-        run: |
-          echo "===== Lint Fail Raw Materials ====="
-          echo "Branch : ${{ github.ref_name }}"
-          echo "Commit : ${{ github.sha }}"
-          echo "Time   : $(date)"
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - name: Install dependencies
-        run: |
-          if [ -f package-lock.json ]; then
-            npm ci
-          else
-            npm install
-          fi
-      - name: Run ESLint
-        run: |
-          npm run lint
+  name: Lint
+  runs-on: self-hosted
+  steps:
+    - name: Checkout source
+      uses: actions/checkout@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+    - name: Show lint information
+      run: |
+        echo "===== Lint Fail Raw Materials ====="
+        echo "Branch : ${{ github.ref_name }}"
+        echo "Commit : ${{ github.sha }}"
+        echo "Node   : $(node -v)"
+        echo "NPM    : $(npm -v)"
+        echo "Time   : $(date)"
+    - name: Install dependencies
+      run: |
+        if [ -f package-lock.json ]; then
+          npm ci
+        else
+          npm install
+        fi
+    - name: Run ESLint
+      run: |
+        npm run lint
   deploy:
     name: Deploy
     needs: lint
