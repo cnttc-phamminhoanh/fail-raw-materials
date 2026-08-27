@@ -7,18 +7,19 @@ const {
   deleteSolution,
   healthCheck,
 } = require("../controllers/failMaterials.controller");
+const { authenticateToken, requireEditPermission } = require("../middleware/auth.middleware");
 
 // GET /api/fail-materials - Lấy danh sách FAIL materials
-router.get("/", getFailMaterials);
+router.get("/", authenticateToken, getFailMaterials);
 
 // GET /api/fail-materials/paginated - Lấy danh sách với phân trang
-router.get("/paginated", getFailMaterialsPaginated);
+router.get("/paginated", authenticateToken, getFailMaterialsPaginated);
 
 // POST /api/fail-materials/solution - Cập nhật hoặc tạo mới solution
-router.post("/solution", upsertSolution);
+router.post("/solution", authenticateToken, requireEditPermission, upsertSolution);
 
 // DELETE /api/fail-materials/solution - Xóa solution
-router.delete("/solution", deleteSolution);
+router.delete("/solution", authenticateToken, requireEditPermission, deleteSolution);
 
 // GET /api/fail-materials/health - Kiểm tra kết nối DB
 router.get("/health", healthCheck);

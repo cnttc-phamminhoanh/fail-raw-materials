@@ -27,6 +27,7 @@ module.exports = [
       "config/**/*.js",
       "database/**/*.js",
       "utils/**/*.js",
+      "middleware/**/*.js",
     ],
     languageOptions: {
       globals: {
@@ -42,6 +43,8 @@ module.exports = [
       globals: {
         ...globals.browser,
       },
+      Auth: "readonly",
+      API: "readonly",
     },
   },
 ];

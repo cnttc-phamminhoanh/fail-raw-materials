@@ -449,13 +449,23 @@ button, input, select, textarea { font: inherit; }
   cursor: pointer;
   font-size: 9px;
   font-weight: 700;
-  /* margin-left: 2px; */
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.cancel-btn:hover {
+
+.cancel-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 9px rgba(185, 31, 42, .25);
 }
-.cancel-btn:active {
+
+.cancel-btn:disabled {
+  color: #8d98a2;
+  background: #e2e7eb;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.cancel-btn:active:not(:disabled) {
   transform: translateY(0);
 }
 

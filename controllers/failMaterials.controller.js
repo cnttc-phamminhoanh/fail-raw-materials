@@ -1,6 +1,6 @@
 const failMaterialsService = require("../services/failMaterials.service");
 
-//Lấy danh sách FAIL materials
+// Lấy danh sách FAIL materials
 async function getFailMaterials(req, res) {
   try {
     const data = await failMaterialsService.getFailMaterials();
@@ -56,7 +56,7 @@ async function getFailMaterialsPaginated(req, res) {
 */
 async function upsertSolution(req, res) {
   try {
-    const { tempReceiptNo, tempReceiptId, solution, updater } = req.body;
+    const { tempReceiptNo, tempReceiptId, solution } = req.body;
 
     if (!tempReceiptNo || !tempReceiptId || !solution) {
       return res.status(400).json({
@@ -69,7 +69,7 @@ async function upsertSolution(req, res) {
       tempReceiptNo,
       tempReceiptId,
       solution,
-      updater: updater || 'ADMIN',
+      updater: req.user.user_no,
     });
 
     res.json({

@@ -11,6 +11,8 @@
   ];
 
   const API_BASE = '/api/fail-materials';
+  const currentUser = Auth.getUser();
+  const canEdit = currentUser?.can_edit === true;
 
   // ===== PAGINATION STATE =====
   let currentPage = 1;
@@ -24,7 +26,7 @@
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (date) url += `&date=${date}`;
 
-      const response = await fetch(url);
+      const response = await API.request(url);
       if (!response.ok) throw new Error('Failed to fetch data');
 
       const result = await response.json();
@@ -76,11 +78,11 @@
     { key: "lotNo", label: "Lot No.", width: 100, group: "material" },
     { key: "materialCode", label: "Material<br>Code", width: 92, group: "material" },
     { key: "materialName", label: "Material<br>Name", width: 100, align: "left", group: "material" },
-    { key: "tempReceiptQty", label: "Temp<br>Receipt<br>Qty", width: 52, number: true, group: "material" },
-    { key: "focQty", label: "FOC<br>Qty", width: 42, number: true, group: "material" },
-    { key: "rejectQty", label: "Reject<br>Qty", width: 52, number: true, reject: true, group: "material" },
+    { key: "tempReceiptQty", label: "Temp<br>Receipt<br>Qty", width: 56, number: true, group: "material" },
+    { key: "focQty", label: "FOC<br>Qty", width: 56, number: true, group: "material" },
+    { key: "rejectQty", label: "Reject<br>Qty", width: 56, number: true, reject: true, group: "material" },
     { key: "failPercent", label: "% Fail", width: 50, group: "material" },
-    { key: "orderPrice", label: "Order<br>Price", width: 68, group: "material" },
+    { key: "orderPrice", label: "Order<br>Price", width: 74, group: "material" },
     { key: "solution", label: "Solution", width: 129, align: "left", solution: true, group: "solution" },
     { key: "solutionUpdater", label: "Solution<br>Updater", width: 62, solution: true, group: "solution" },
     { key: "updateTime", label: "Update<br>Time", width: 128, solution: true, group: "solution" },
@@ -90,7 +92,7 @@
     { key: "returnedCustoms", label: "Returned<br>Customs",width: 58, actual: true, group: "actual"},
     { key: "destroyedInternal", label: "Destroyed<br>Internal",width: 60, actual: true, group: "actual" },
     { key: "destroyedCustoms", label: "Destroyed<br>Customs",width: 60, actual: true, group: "actual" },
-    { key: "remainQty", label: "Remain<br>Qty", width: 60, number: true, actual: true, group: "actual"},
+    { key: "remainQty", label: "Remain<br>Qty", width: 66, number: true, actual: true, group: "actual"},
     { key: "replacementQty", label: "Replacement<br>Qty", width: 80, number: true },
     { key: "newLotNo", label: "New Lot No.", width: 80, align: "left" },
   ];
@@ -356,7 +358,8 @@
         updateTime: row.updateTime
       } : null;
 
-      const editable = true;
+      // const editable = true;
+
       const actual = hasActualHandling(row);
       let html = `<tr>`;
 
@@ -366,12 +369,47 @@
           return;
         }
        
+        // if (col.key === "edit") {
+        //   const hasSolution = solution !== null;
+        //   html += `<td class="edit-cell" data-col-key="edit">
+        //     <button class="edit-btn" data-index="${filteredIndex}" ${editable ? "" : "disabled"}>Edit</button>
+        //     ${hasSolution ? `<button class="cancel-btn" data-index="${filteredIndex}" title="Cancel solution">Cancel</button>` : ''}
+        //   </td>`;
+        //   return;
+        // }
+
         if (col.key === "edit") {
           const hasSolution = solution !== null;
-          html += `<td class="edit-cell" data-col-key="edit">
-            <button class="edit-btn" data-index="${filteredIndex}" ${editable ? "" : "disabled"}>Edit</button>
-            ${hasSolution ? `<button class="cancel-btn" data-index="${filteredIndex}" title="Cancel solution">Cancel</button>` : ''}
-          </td>`;
+
+          html += `
+            <td class="edit-cell" data-col-key="edit">
+
+              <button
+                class="edit-btn ${canEdit ? "" : "permission-disabled"}"
+                data-index="${filteredIndex}"
+                ${canEdit ? "" : "disabled"}
+                title="${canEdit ? "Edit solution" : "You do not have permission to edit"}"
+              >
+                Edit
+              </button>
+
+              ${
+                hasSolution
+                  ? `
+                    <button
+                      class="cancel-btn ${canEdit ? "" : "permission-disabled"}"
+                      data-index="${filteredIndex}"
+                      ${canEdit ? "" : "disabled"}
+                      title="${canEdit ? "Cancel solution" : "You do not have permission to cancel solution"}"
+                    >
+                      Cancel
+                    </button>
+                  `
+                  : ""
+              }
+            </td>
+          `;
+
           return;
         }
 
@@ -506,7 +544,7 @@
     };
 
     try {
-      const response = await fetch('/api/fail-materials/solution', {
+      const response = await API.request('/api/fail-materials/solution', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -536,7 +574,7 @@
     if (!row) return;
 
     try {
-      const response = await fetch('/api/fail-materials/solution', {
+      const response = API.request('/api/fail-materials/solution', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -613,11 +651,30 @@
       }
 
       // Cancel button
+      // const cancelBtn = event.target.closest(".cancel-btn");
+      // if (cancelBtn) {
+      //   const row = rows[Number(cancelBtn.dataset.index)];
+      //   if (row) {
+      //     if (confirm(`Are you sure you want to cancel the solution for "${row.tempReceiptNo}"?`)) {
+      //       cancelSolution(row);
+      //     }
+      //   }
+      //   return;
+      // }
+
       const cancelBtn = event.target.closest(".cancel-btn");
+
       if (cancelBtn) {
+        if (cancelBtn.disabled) {
+          return;
+        }
+
         const row = rows[Number(cancelBtn.dataset.index)];
+
         if (row) {
-          if (confirm(`Are you sure you want to cancel the solution for "${row.tempReceiptNo}"?`)) {
+          if (
+            confirm(`Are you sure you want to cancel the solution for "${row.tempReceiptNo}"?`)
+          ) {
             cancelSolution(row);
           }
         }

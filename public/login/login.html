@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FAIL Materials | Login</title>
+    <link rel="icon" type="image/png" href="/favicons/itgi-favicon2.png">
+    <link rel="stylesheet" href="/login/login.css" />
+  </head>
+
+  <body>
+    <div class="background">
+      <div class="grid"></div>
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+      <div class="particles">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+
+    <main class="login-page">
+      <section class="login-card" id="loginCard">
+        <!-- BRAND -->
+        <div class="brand">
+          <div class="brand-logo">
+            <!-- <span>F</span> -->
+            <img src="/favicons/itgi-favicon.png" alt="FAIL Logo" style="width: 64px; height: 64px; object-fit: contain;" />
+          </div>
+          <div class="brand-text">
+            <strong> FAIL </strong>
+            <span> RAW MATERIALS </span>
+          </div>
+        </div>
+
+        <!-- HEADER -->
+        <div class="login-header">
+          <p class="eyebrow">SECURE ACCESS</p>
+          <h1>Welcome back</h1>
+          <p class="subtitle">Sign in to continue to your workspace</p>
+        </div>
+
+        <!-- FORM -->
+        <form id="loginForm">
+          <div class="field">
+            <label for="user_no"> User No </label>
+            <div class="input-box">
+              <span class="input-icon"> ◉ </span>
+              <input
+                id="user_no"
+                type="text"
+                placeholder="Enter your user no"
+                autocomplete="user-no"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="password"> Password </label>
+            <div class="input-box">
+              <span class="input-icon"> ◆ </span>
+              <input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+              />
+              <button type="button" id="togglePassword" class="show-password">
+                Show
+              </button>
+            </div>
+          </div>
+
+          <label class="remember">
+            <input type="checkbox" id="rememberPassword" />
+            <span> Remember password </span>
+          </label>
+
+          <div id="loginError" class="login-error"></div>
+          <button type="submit" id="loginButton" class="login-button">
+            <span class="button-content">
+              <span> SIGN IN </span>
+              <span class="arrow"> → </span>
+            </span>
+            <span class="loader"></span>
+          </button>
+        </form>
+
+        <footer class="login-footer">
+          <span> FAIL RAW MATERIALS </span>
+          <span> • </span>
+          <span> SECURE WORKSPACE </span>
+        </footer>
+      </section>
+    </main>
+
+    <script src="/login/login.js"></script>
+  </body>
+</html>
