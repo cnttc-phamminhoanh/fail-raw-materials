@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>404 - Page Not Found</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/png" href="/favicons/itgi-favicon2.png" />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        min-height: 100vh;
+        overflow: hidden;
+        font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        background: #0a0e17;
+        color: #f0f4ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        user-select: none;
+      }
+
+      /* ===== ANIMATED BACKGROUND ===== */
+      .bg-container {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+      }
+
+      .bg-gradient {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(120px);
+        opacity: 0.4;
+        animation: floatBg 20s ease-in-out infinite alternate;
+      }
+
+      .bg-gradient:nth-child(1) {
+        width: 600px;
+        height: 600px;
+        top: -10%;
+        left: -10%;
+        background: radial-gradient(circle, #4361ee, transparent 70%);
+        animation-delay: 0s;
+      }
+
+      .bg-gradient:nth-child(2) {
+        width: 500px;
+        height: 500px;
+        bottom: -20%;
+        right: -10%;
+        background: radial-gradient(circle, #00d9ff, transparent 70%);
+        animation-delay: -6s;
+      }
+
+      .bg-gradient:nth-child(3) {
+        width: 400px;
+        height: 400px;
+        top: 40%;
+        left: 35%;
+        background: radial-gradient(circle, #7c3aed, transparent 70%);
+        animation-delay: -12s;
+      }
+
+      @keyframes floatBg {
+        0% {
+          transform: translate(0, 0) scale(1);
+        }
+        33% {
+          transform: translate(80px, -40px) scale(1.1);
+        }
+        66% {
+          transform: translate(-60px, 60px) scale(0.9);
+        }
+        100% {
+          transform: translate(40px, -80px) scale(1.05);
+        }
+      }
+
+      /* ===== GRID OVERLAY ===== */
+      .grid-overlay {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        background-size: 60px 60px;
+        opacity: 0.5;
+      }
+
+      /* ===== PARTICLES ===== */
+      .particles {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .particle {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        animation: particleFloat 12s linear infinite;
+      }
+
+      .particle:nth-child(1) {
+        left: 10%;
+        top: 20%;
+        animation-delay: 0s;
+      }
+      .particle:nth-child(2) {
+        left: 25%;
+        top: 60%;
+        animation-delay: -2s;
+        width: 3px;
+        height: 3px;
+      }
+      .particle:nth-child(3) {
+        left: 80%;
+        top: 15%;
+        animation-delay: -4s;
+        width: 5px;
+        height: 5px;
+      }
+      .particle:nth-child(4) {
+        left: 70%;
+        top: 80%;
+        animation-delay: -1s;
+      }
+      .particle:nth-child(5) {
+        left: 50%;
+        top: 10%;
+        animation-delay: -5s;
+        width: 3px;
+        height: 3px;
+      }
+      .particle:nth-child(6) {
+        left: 90%;
+        top: 50%;
+        animation-delay: -3s;
+        width: 6px;
+        height: 6px;
+      }
+      .particle:nth-child(7) {
+        left: 35%;
+        top: 35%;
+        animation-delay: -6s;
+      }
+      .particle:nth-child(8) {
+        left: 15%;
+        top: 90%;
+        animation-delay: -7s;
+        width: 3px;
+        height: 3px;
+      }
+
+      @keyframes particleFloat {
+        0% {
+          transform: translateY(20px) scale(0);
+          opacity: 0;
+        }
+        20% {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+        80% {
+          opacity: 1;
+          transform: translateY(-60px) scale(1);
+        }
+        100% {
+          transform: translateY(-100px) scale(0);
+          opacity: 0;
+        }
+      }
+
+      /* ===== MAIN CONTENT ===== */
+      .content {
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        padding: 40px;
+        max-width: 700px;
+        animation: fadeInUp 1s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(40px) scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      /* ===== 3D NUMBER ===== */
+      .number-container {
+        perspective: 800px;
+        margin-bottom: 30px;
+      }
+
+      .number-3d {
+        font-size: 180px;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -8px;
+        background: linear-gradient(135deg, #00d9ff, #4361ee, #7c3aed);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        transform: rotateX(10deg) rotateY(-10deg) scale(1);
+        animation: number3D 4s ease-in-out infinite alternate;
+        text-shadow: 0 0 80px rgba(67, 97, 238, 0.3);
+        position: relative;
+        display: inline-block;
+      }
+
+      .number-3d::after {
+        content: "404";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, #00d9ff, #4361ee, #7c3aed);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        filter: blur(20px);
+        opacity: 0.4;
+        transform: translateZ(-40px) scale(1.1);
+        z-index: -1;
+      }
+
+      @keyframes number3D {
+        0% {
+          transform: rotateX(8deg) rotateY(-8deg) scale(1);
+          text-shadow: 0 0 60px rgba(67, 97, 238, 0.2);
+        }
+        50% {
+          transform: rotateX(-4deg) rotateY(6deg) scale(1.02);
+          text-shadow: 0 0 100px rgba(0, 217, 255, 0.3);
+        }
+        100% {
+          transform: rotateX(10deg) rotateY(-10deg) scale(0.98);
+          text-shadow: 0 0 80px rgba(124, 58, 237, 0.25);
+        }
+      }
+
+      /* ===== GLOW ORB ===== */
+      .glow-orb {
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle,
+          rgba(0, 217, 255, 0.15),
+          transparent 70%
+        );
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        animation: glowPulse 3s ease-in-out infinite alternate;
+        pointer-events: none;
+      }
+
+      @keyframes glowPulse {
+        0% {
+          transform: translate(-50%, -50%) scale(0.8);
+          opacity: 0.5;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(1.4);
+          opacity: 1;
+        }
+      }
+
+      /* ===== TITLE ===== */
+      .title {
+        font-size: 32px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        background: linear-gradient(135deg, #f0f4ff, #b0c4ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      .subtitle {
+        font-size: 18px;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 400;
+        margin-bottom: 32px;
+        line-height: 1.6;
+      }
+
+      .subtitle span {
+        color: rgba(0, 217, 255, 0.8);
+        font-weight: 500;
+      }
+
+      /* ===== BUTTONS ===== */
+      .actions {
+        display: flex;
+        gap: 14px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 14px 36px;
+        border: none;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #00d9ff, #4361ee);
+        color: #fff;
+        box-shadow: 0 8px 32px rgba(67, 97, 238, 0.35);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 48px rgba(67, 97, 238, 0.5);
+      }
+
+      .btn-primary:active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.06);
+        color: #f0f4ff;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(8px);
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-3px);
+      }
+
+      .btn .icon {
+        font-size: 18px;
+        transition: transform 0.3s;
+      }
+
+      .btn-primary:hover .icon {
+        transform: translateX(4px);
+      }
+
+      .btn .ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: scale(0);
+        animation: rippleEffect 0.6s ease-out;
+        pointer-events: none;
+      }
+
+      @keyframes rippleEffect {
+        to {
+          transform: scale(4);
+          opacity: 0;
+        }
+      }
+
+      /* ===== FOOTER ===== */
+      .footer {
+        margin-top: 40px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.2);
+        letter-spacing: 0.5px;
+      }
+
+      .footer span {
+        margin: 0 8px;
+      }
+
+      /* ===== RESPONSIVE ===== */
+      @media (max-width: 640px) {
+        .number-3d {
+          font-size: 120px;
+          letter-spacing: -4px;
+        }
+
+        .title {
+          font-size: 24px;
+        }
+
+        .subtitle {
+          font-size: 15px;
+          padding: 0 10px;
+        }
+
+        .actions {
+          flex-direction: column;
+          align-items: center;
+          width: 100%;
+          max-width: 300px;
+          margin: 0 auto;
+        }
+
+        .btn {
+          width: 100%;
+          justify-content: center;
+          padding: 12px 24px;
+        }
+
+        .content {
+          padding: 20px;
+        }
+      }
+
+      @media (max-width: 400px) {
+        .number-3d {
+          font-size: 80px;
+        }
+
+        .title {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- BACKGROUND -->
+    <div class="bg-container">
+      <div class="bg-gradient"></div>
+      <div class="bg-gradient"></div>
+      <div class="bg-gradient"></div>
+      <div class="grid-overlay"></div>
+      <div class="particles">
+        <span class="particle"></span>
+        <span class="particle"></span>
+        <span class="particle"></span>
+        <span class="particle"></span>
+        <span class="particle"></span>
+        <span class="particle"></span>
+        <span class="particle"></span>
+        <span class="particle"></span>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <main class="content">
+      <div class="number-container">
+        <div class="glow-orb"></div>
+        <div class="number-3d">404</div>
+      </div>
+
+      <h1 class="title">Lost in the void?</h1>
+      <p class="subtitle">
+        The page you're looking for doesn't exist or has been moved.
+        <br />
+        Let's get you back on <span>track</span>.
+      </p>
+
+      <div class="actions">
+        <a href="/fail_materials" class="btn btn-primary">
+          <!-- <span class="icon">🏠</span> -->
+          Back to Dashboard
+          <span class="icon">→</span>
+        </a>
+        <a href="javascript:history.back()" class="btn btn-secondary">
+          <span class="icon">↩</span>
+          Go Back
+        </a>
+      </div>
+
+      <div class="footer">
+        <span>FAIL</span>
+        <span>•</span>
+        <span>RAW MATERIALS</span>
+        <span>•</span>
+        <span>404</span>
+      </div>
+    </main>
+
+    <script>
+      // ===== RIPPLE EFFECT =====
+      document.querySelectorAll(".btn").forEach((btn) => {
+        btn.addEventListener("click", function (e) {
+          const rect = this.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          const ripple = document.createElement("span");
+          ripple.className = "ripple";
+          ripple.style.left = x + "px";
+          ripple.style.top = y + "px";
+          ripple.style.width = "20px";
+          ripple.style.height = "20px";
+          this.appendChild(ripple);
+          setTimeout(() => ripple.remove(), 600);
+        });
+      });
+
+      // ===== PARALLAX 3D EFFECT =====
+      document.addEventListener("mousemove", (e) => {
+        const x = (e.clientX / window.innerWidth - 0.5) * 20;
+        const y = (e.clientY / window.innerHeight - 0.5) * -20;
+        const num = document.querySelector(".number-3d");
+        num.style.transform = `rotateX(${8 + y * 0.2}deg) rotateY(${-8 + x * 0.2}deg) scale(1)`;
+      });
+    </script>
+  </body>
+</html>

@@ -43,8 +43,8 @@ async function getFailMaterials() {
       LEFT JOIN RDS.erp_t8_gi.dbo.scm_other_out2 ow ON ow.made_lot = n.made_lot AND ow.goods_no = n.goods_no
       LEFT JOIN RDS.erp_t8_gi.dbo.scm_other_out1 ow1 ON ow1.sheet_no = ow.sheet_no AND ow1.sheet_type = 'WECGI'
       WHERE
-        n.adj_result = 2
-        AND n.pro_result = 0
+        n.return_qty + n.return_qty1 > 0
+        AND n.pro_result <> 2
       GROUP BY
         n.def15, n.pur_no, n.pur_id, o.sheet_qty, n.sheet_no, n.sheet_id, n.made_lot,
         n.goods_no, n.goods_name, n.sheet_qty, n.sheet_qty1, n.return_qty, n.return_qty1,
@@ -70,7 +70,7 @@ async function getFailMaterialsPaginated({
     const pool = await getBIPool();
     const offset = (page - 1) * limit;
 
-    let whereClause = "n.adj_result = 2 AND n.pro_result = 0";
+    let whereClause = "n.return_qty + n.return_qty1 > 0 AND n.pro_result <> 2";
     const params = [];
 
     if (search) {
@@ -88,7 +88,6 @@ async function getFailMaterialsPaginated({
     }
 
     if (date) {
-      // whereClause += ` AND CAST(sl.modified_at AS DATE) = @date`;
       whereClause += ` AND sl.modified_at >= @date AND sl.modified_at < DATEADD(DAY, 1, @date)`;
       params.push({ name: "date", value: date, type: sql.Date });
     }
@@ -228,6 +227,7 @@ async function upsertSolution({ tempReceiptNo, tempReceiptId, solution, updater 
       .query(checkQuery);
 
     const exists = checkResult.recordset[0].count > 0;
+
     const now = new Date();
 
     if (exists) {
@@ -250,24 +250,25 @@ async function upsertSolution({ tempReceiptNo, tempReceiptId, solution, updater 
         .query(updateQuery);
 
       return { success: true, action: 'updated' };
-    } else {
-      // Insert new record
-      const insertQuery = `
-        INSERT INTO RDS.erp_t8_gi.dbo.pur_notice_sol 
-        (notice_no, notice_id, solution, modified_at, modified_user)
-        VALUES (@noticeNo, @noticeId, @solution, @modifiedAt, @modifiedUser)
-      `;
-
-      await pool.request()
-        .input("noticeNo", sql.VarChar, tempReceiptNo)
-        .input("noticeId", sql.Int, parseInt(tempReceiptId, 10))
-        .input("solution", sql.NVarChar, solution)
-        .input("modifiedAt", sql.DateTime, now)
-        .input("modifiedUser", sql.VarChar, updater || 'ADMIN')
-        .query(insertQuery);
-
-      return { success: true, action: 'inserted' };
     }
+    // else {
+    //   // Insert new record
+    //   const insertQuery = `
+    //     INSERT INTO RDS.erp_t8_gi.dbo.pur_notice_sol 
+    //     (notice_no, notice_id, solution, modified_at, modified_user)
+    //     VALUES (@noticeNo, @noticeId, @solution, @modifiedAt, @modifiedUser)
+    //   `;
+
+    //   await pool.request()
+    //     .input("noticeNo", sql.VarChar, tempReceiptNo)
+    //     .input("noticeId", sql.Int, parseInt(tempReceiptId, 10))
+    //     .input("solution", sql.NVarChar, solution)
+    //     .input("modifiedAt", sql.DateTime, now)
+    //     .input("modifiedUser", sql.VarChar, updater || 'ADMIN')
+    //     .query(insertQuery);
+
+    //   return { success: true, action: 'inserted' };
+    // }
   } catch (error) {
     console.error("Error in upsertSolution:", error);
     throw error;

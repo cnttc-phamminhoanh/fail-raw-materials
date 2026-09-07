@@ -42,9 +42,9 @@ module.exports = [
     languageOptions: {
       globals: {
         ...globals.browser,
+        Auth: "readonly",
+        API: "readonly",
       },
-      Auth: "readonly",
-      API: "readonly",
     },
   },
 ];

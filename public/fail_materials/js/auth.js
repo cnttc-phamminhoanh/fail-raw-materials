@@ -40,17 +40,17 @@
   const token = getToken();
   const user = getUser();
 
-  if (!token || !user || isTokenExpired(token)) {
+  const isAuthenticated = token && user && !isTokenExpired(token);
+
+  if (!isAuthenticated) {
+    // Remove invalid token
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
-
-    window.location.replace("/login");
-
-    return;
   }
 
   window.Auth = {
     getToken,
     getUser,
+    isAuthenticated: () => isAuthenticated,
   };
 })();

@@ -11,8 +11,18 @@
   ];
 
   const API_BASE = '/api/fail-materials';
-  const currentUser = Auth.getUser();
-  const canEdit = currentUser?.can_edit === true;
+
+  // Kiểm tra đăng nhập trước khi thực hiện hành động
+  function requireAuth() {
+  if (!Auth.isAuthenticated()) {
+    localStorage.setItem("redirect_after_login", window.location.pathname + window.location.search);
+
+    window.location.replace("/login");
+    return false;
+  }
+
+  return true;
+}
 
   // ===== PAGINATION STATE =====
   let currentPage = 1;
@@ -23,10 +33,11 @@
   async function fetchDataFromAPI(search = '', date = '', page = 1, limit = 25) {
     try {
       let url = `${API_BASE}/paginated?page=${page}&limit=${limit}`;
+
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (date) url += `&date=${date}`;
 
-      const response = await API.request(url);
+      const response = await API.request(url, { method: 'GET' });
       if (!response.ok) throw new Error('Failed to fetch data');
 
       const result = await response.json();
@@ -72,15 +83,15 @@
     { key: "supplier", label: "Supplier", width: 104, align: "left" },
     { key: "poNo", label: "PO No.", width: 98},
     { key: "poId", label: "PO ID", width: 38 },
-    { key: "orderQty", label: "Order<br>Qty", width: 50, number: true },
+    { key: "orderQty", label: "Order<br>Qty", width: 54, number: true },
     { key: "tempReceiptNo", label: "Temp Receipt No.", width: 105 },
     { key: "tempReceiptId", label: "Temp<br>Receipt<br>ID", width: 50 },
     { key: "lotNo", label: "Lot No.", width: 100, group: "material" },
     { key: "materialCode", label: "Material<br>Code", width: 92, group: "material" },
     { key: "materialName", label: "Material<br>Name", width: 100, align: "left", group: "material" },
-    { key: "tempReceiptQty", label: "Temp<br>Receipt<br>Qty", width: 56, number: true, group: "material" },
+    { key: "tempReceiptQty", label: "Temp<br>Receipt<br>Qty", width: 73, number: true, group: "material" },
     { key: "focQty", label: "FOC<br>Qty", width: 56, number: true, group: "material" },
-    { key: "rejectQty", label: "Reject<br>Qty", width: 56, number: true, reject: true, group: "material" },
+    { key: "rejectQty", label: "Reject<br>Qty", width: 73, number: true, reject: true, group: "material" },
     { key: "failPercent", label: "% Fail", width: 50, group: "material" },
     { key: "orderPrice", label: "Order<br>Price", width: 74, group: "material" },
     { key: "solution", label: "Solution", width: 129, align: "left", solution: true, group: "solution" },
@@ -368,39 +379,35 @@
           html += `<td class="status-cell" data-col-key="status" title="${actual ? "Actual handling data exists" : "No actual handling data"}"><span class="status-dot ${actual ? "ok" : "pending"}"></span></td>`;
           return;
         }
-       
-        // if (col.key === "edit") {
-        //   const hasSolution = solution !== null;
-        //   html += `<td class="edit-cell" data-col-key="edit">
-        //     <button class="edit-btn" data-index="${filteredIndex}" ${editable ? "" : "disabled"}>Edit</button>
-        //     ${hasSolution ? `<button class="cancel-btn" data-index="${filteredIndex}" title="Cancel solution">Cancel</button>` : ''}
-        //   </td>`;
-        //   return;
-        // }
-
+        
         if (col.key === "edit") {
           const hasSolution = solution !== null;
+          const authenticated = Auth.isAuthenticated();
+          const user = Auth.getUser();
+          const canEdit = user?.can_edit === true;
+          
+          // Nếu chưa đăng nhập => không disabled (để click vào và redirect login)
+          // Nếu đã login nhưng không có quyền => disabled
+          const isDisabled = authenticated && !canEdit;
 
           html += `
             <td class="edit-cell" data-col-key="edit">
-
               <button
-                class="edit-btn ${canEdit ? "" : "permission-disabled"}"
+                class="edit-btn ${isDisabled ? "permission-disabled" : ""}"
                 data-index="${filteredIndex}"
-                ${canEdit ? "" : "disabled"}
-                title="${canEdit ? "Edit solution" : "You do not have permission to edit"}"
+                ${isDisabled ? 'disabled' : ''}
+                title="${!authenticated ? 'Please login to edit' : isDisabled ? 'You do not have permission to edit' : 'Edit solution'}"
               >
                 Edit
               </button>
-
               ${
                 hasSolution
                   ? `
                     <button
-                      class="cancel-btn ${canEdit ? "" : "permission-disabled"}"
+                      class="cancel-btn ${isDisabled ? "permission-disabled" : ""}"
                       data-index="${filteredIndex}"
-                      ${canEdit ? "" : "disabled"}
-                      title="${canEdit ? "Cancel solution" : "You do not have permission to cancel solution"}"
+                      ${isDisabled ? 'disabled' : ''}
+                      title="${!authenticated ? 'Please login to cancel' : isDisabled ? 'You do not have permission to cancel solution' : 'Cancel solution'}"
                     >
                       Cancel
                     </button>
@@ -409,7 +416,6 @@
               }
             </td>
           `;
-
           return;
         }
 
@@ -438,17 +444,6 @@
 
     els.rowCount.textContent = filteredRows.length;
     els.pendingCount.textContent = filteredRows.filter(row => !row.solution).length;
-  }
-
-  function render() {
-    renderColGroup();
-    renderHead();
-    const limitSelect = document.getElementById('limitSelect');
-    if (limitSelect) {
-      currentLimit = parseInt(limitSelect.value, 10);
-    }
-    
-    loadData(1);
   }
 
   function addResizeHandles() {
@@ -515,10 +510,7 @@
     currentRow = row;
     const existing = row.solution ? { solution: row.solution } : null;
 
-    els.solutionSelect.innerHTML = SOLUTIONS.map(
-      (value) =>
-        `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`,
-    ).join("");
+    els.solutionSelect.innerHTML = SOLUTIONS.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("");
     
     els.solutionSelect.value = existing?.solution || SOLUTIONS[0];
     els.modalAction.textContent = existing ? "UPDATE" : "INSERT";
@@ -536,11 +528,25 @@
     event.preventDefault();
     if (!currentRow) return;
 
+    if (!Auth.isAuthenticated()) {
+      localStorage.setItem("redirect_after_login", window.location.pathname + window.location.search);
+
+      window.location.replace("/login");
+      return;
+    }
+
+    const user = Auth.getUser();
+
+    if (user?.can_edit !== true) {
+      alert("You do not have permission to edit solution.");
+      return;
+    }
+
     const payload = {
       tempReceiptNo: currentRow.tempReceiptNo,
       tempReceiptId: currentRow.tempReceiptId,
       solution: els.solutionSelect.value,
-      updater: "ADMIN",
+      updater: user.user_no,
     };
 
     try {
@@ -571,10 +577,27 @@
   }
 
   async function cancelSolution(row) {
+    if (!Auth.isAuthenticated()) {
+      localStorage.setItem(
+        "redirect_after_login",
+        window.location.pathname + window.location.search
+      );
+
+      window.location.replace("/login");
+      return;
+    }
+
+    const user = Auth.getUser();
+
+    if (user?.can_edit !== true) {
+      alert("You do not have permission to cancel solution.");
+      return;
+    }
+
     if (!row) return;
 
     try {
-      const response = API.request('/api/fail-materials/solution', {
+      const response = await API.request('/api/fail-materials/solution', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
@@ -644,40 +667,54 @@
     els.tableBody.addEventListener("click", (event) => {
       // Edit button
       const editBtn = event.target.closest(".edit-btn");
+
       if (editBtn && !editBtn.disabled) {
+        // Chưa login → chuyển /login
+        if (!requireAuth()) return;
+
+        // Đã login → kiểm tra quyền
+        const user = Auth.getUser();
+
+        if (user?.can_edit !== true) {
+          alert("You do not have permission to edit solution.");
+          return;
+        }
+
         const row = rows[Number(editBtn.dataset.index)];
-        if (row) openModal(row);
+
+        if (row) {
+          openModal(row);
+        }
+
         return;
       }
 
       // Cancel button
-      // const cancelBtn = event.target.closest(".cancel-btn");
-      // if (cancelBtn) {
-      //   const row = rows[Number(cancelBtn.dataset.index)];
-      //   if (row) {
-      //     if (confirm(`Are you sure you want to cancel the solution for "${row.tempReceiptNo}"?`)) {
-      //       cancelSolution(row);
-      //     }
-      //   }
-      //   return;
-      // }
-
       const cancelBtn = event.target.closest(".cancel-btn");
 
-      if (cancelBtn) {
-        if (cancelBtn.disabled) {
+      if (cancelBtn && !cancelBtn.disabled) {
+        // Chưa login → chuyển /login
+        if (!requireAuth()) return;
+
+        // Đã login → kiểm tra quyền
+        const user = Auth.getUser();
+
+        if (user?.can_edit !== true) {
+          alert("You do not have permission to cancel solution.");
           return;
         }
 
         const row = rows[Number(cancelBtn.dataset.index)];
 
-        if (row) {
-          if (
-            confirm(`Are you sure you want to cancel the solution for "${row.tempReceiptNo}"?`)
-          ) {
-            cancelSolution(row);
-          }
+        if (
+          row &&
+          confirm(
+            `Are you sure you want to cancel the solution for "${row.tempReceiptNo}"?`
+          )
+        ) {
+          cancelSolution(row);
         }
+
         return;
       }
     });
@@ -694,5 +731,58 @@
   }
 
   initEvents();
+
+  // ===== USER SECTION =====
+  function updateUserUI() {
+    const user = Auth.getUser();
+    const isAuth = Auth.isAuthenticated();
+    
+    const avatarEl = document.getElementById('userInitial');
+    const nameEl = document.getElementById('userName');
+    const roleEl = document.getElementById('userRole');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const profileEl = document.getElementById('userProfile');
+
+    if (isAuth && user) {
+      // Lấy chữ cái đầu của username
+      const initial = user.username ? user.username.charAt(0).toUpperCase() : '?';
+      avatarEl.textContent = initial;
+      nameEl.textContent = user.username || 'User';
+      roleEl.textContent = user.can_edit ? 'Editor' : 'Viewer';
+      
+      // Hiển thị profile
+      profileEl.style.display = 'flex';
+    } else {
+      // Guest mode
+      avatarEl.textContent = 'G';
+      nameEl.textContent = 'Guest';
+      roleEl.textContent = 'Viewer';
+      profileEl.style.display = 'flex';
+    }
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to logout?')) {
+        localStorage.removeItem('fail_auth_token');
+        localStorage.removeItem('fail_auth_user');
+        window.location.replace('/login');
+      }
+    });
+  }
+
+  // Gọi updateUserUI sau khi render
+  // Thêm vào cuối hàm render()
+  function render() {
+    renderColGroup();
+    renderHead();
+    const limitSelect = document.getElementById('limitSelect');
+    if (limitSelect) {
+      currentLimit = parseInt(limitSelect.value, 10);
+    }
+    
+    updateUserUI(); // <--- THÊM DÒNG NÀY
+    loadData(1);
+  }
+
   render();
 })();

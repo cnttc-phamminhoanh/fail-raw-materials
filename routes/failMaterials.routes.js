@@ -13,7 +13,7 @@ const { authenticateToken, requireEditPermission } = require("../middleware/auth
 router.get("/", authenticateToken, getFailMaterials);
 
 // GET /api/fail-materials/paginated - Lấy danh sách với phân trang
-router.get("/paginated", authenticateToken, getFailMaterialsPaginated);
+router.get("/paginated", getFailMaterialsPaginated);
 
 // POST /api/fail-materials/solution - Cập nhật hoặc tạo mới solution
 router.post("/solution", authenticateToken, requireEditPermission, upsertSolution);

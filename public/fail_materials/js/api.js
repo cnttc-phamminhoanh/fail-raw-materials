@@ -20,17 +20,20 @@
       headers,
     });
 
+    // Nếu là GET request, không redirect (cho phép xem báo cáo)
+    if (response.status === 401 && options.method === 'GET') {
+      return response;
+    }
+
     if (response.status === 401) {
       const result = await response.json().catch(() => ({}));
 
       if (result.code === "TOKEN_EXPIRED") {
-        window.location.replace("/login/login.html");
-
+        window.location.replace("/login");
         return null;
       }
 
-      window.location.replace("/login/login.html");
-
+      window.location.replace("/login");
       return null;
     }
 

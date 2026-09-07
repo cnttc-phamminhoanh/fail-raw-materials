@@ -12,7 +12,11 @@
   const user = localStorage.getItem(USER_KEY);
 
   if (token && user) {
-    window.location.replace("/fail_materials");
+    // Đã đăng nhập, chuyển về trang chính
+    const redirectUrl = localStorage.getItem('redirect_after_login') || '/fail_materials';
+    localStorage.removeItem('redirect_after_login');
+
+    window.location.replace(redirectUrl);
     return;
   }
 
@@ -139,7 +143,11 @@
       saveRememberedLogin(user_no, password);
 
       // Go to application
-      window.location.replace("/fail_materials");
+      const redirectUrl = localStorage.getItem("redirect_after_login") || "/fail_materials";
+
+      localStorage.removeItem("redirect_after_login");
+
+      window.location.replace(redirectUrl);
     } catch (error) {
       console.error("Login error:", error);
 
