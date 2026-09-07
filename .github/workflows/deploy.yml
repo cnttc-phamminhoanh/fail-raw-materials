@@ -82,7 +82,7 @@ jobs:
         run: |
           echo "Waiting for application..."
           for i in {1..10}; do
-            if curl -fsS http://127.0.0.1:4003/ > /dev/null; then
+            if curl -fsS http://127.0.0.1:4003/api/health > /dev/null; then
               echo "Application is running."
               exit 0
             fi
