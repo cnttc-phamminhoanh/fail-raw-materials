@@ -111,12 +111,12 @@ textarea {
 .topbar h1 strong {
   color: #ff5260;
 }
-.header-stats {
+/* .header-stats {
   display: flex;
   gap: 8px;
   position: relative;
   z-index: 1;
-}
+} */
 .stat-chip {
   min-width: 86px;
   padding: 7px 11px;
@@ -320,12 +320,6 @@ textarea {
   border-radius: 50%;
   display: inline-block;
 }
-.legend-green {
-  background: #19a65a;
-}
-.legend-red {
-  background: #ef3340;
-}
 
 .table-scroll {
   width: 100%;
@@ -385,11 +379,6 @@ textarea {
   min-width: 20px;
   max-width: 400px;
 }
-
-/* #failTable thead {
-  position: relative;
-  z-index: 5;
-} */
 
 #failTable thead {
   position: sticky;
@@ -542,7 +531,6 @@ textarea {
 /* Solution, Solution Updater, Update Time - chữ #23384b */
 #failTable .solution-text {
   color: #23384b !important;
-  /* font-weight: 600; */
 }
 
 /* Temp Receipt Qty và FOC Qty màu vàng nhạt */
@@ -604,13 +592,10 @@ textarea {
 .actual-has-value {
   background: #f7d871 !important;
   color: #23384b !important;
-  /* font-weight: 600; */
-}
-.actual-empty {
-  background: inherit !important;
+
 }
 
-.edit-cell {
+/* .edit-cell {
   padding: 0 3px !important;
   text-align: center;
   background: #fff !important;
@@ -618,71 +603,7 @@ textarea {
   align-items: center;
   justify-content: center;
   gap: 5px;
-}
-
-.edit-btn {
-  border: 0;
-  min-width: 40px;
-  height: 24px;
-  padding: 0 4px;
-  border-radius: 5px;
-  color: #fff;
-  background: linear-gradient(135deg, #1ba4d8, #117eb2);
-  box-shadow: 0 2px 5px rgba(17, 126, 178, 0.18);
-  cursor: pointer;
-  font-size: 9px;
-  font-weight: 700;
-}
-.edit-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 9px rgba(17, 126, 178, 0.25);
-}
-.edit-btn:disabled {
-  color: #8d98a2;
-  background: #e2e7eb;
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-/* Cancel button */
-.cancel-btn {
-  border: 0;
-  min-width: 40px;
-  height: 24px;
-  padding: 0 4px;
-  border-radius: 5px;
-  color: #fff;
-  background: #f53744;
-  box-shadow: 0 2px 5px rgba(185, 31, 42, 0.18);
-  cursor: pointer;
-  font-size: 9px;
-  font-weight: 700;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
-}
-
-.cancel-btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 9px rgba(185, 31, 42, 0.25);
-}
-
-.cancel-btn:disabled {
-  color: #8d98a2;
-  background: #e2e7eb;
-  box-shadow: none;
-  cursor: not-allowed;
-  transform: none !important;
-}
-
-.cancel-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.update-time {
-  color: #3e627d;
-  font-size: 10px;
-}
+} */
 
 .resize-handle {
   position: absolute;
@@ -1176,4 +1097,148 @@ body.resizing {
   height: 7px;
   border-radius: 50%;
   display: inline-block;
+}
+
+/* ===== ACTION HEADER & CELL ===== */
+#failTable thead th.action-header {
+  height: 31px;
+  color: #4a3a05;
+  background: #fff4cf;
+  font-size: 10px;
+}
+
+#failTable td.action-cell {
+  text-align: center;
+  vertical-align: middle;
+  padding: 2px 4px;
+  background: #fff !important;
+}
+
+#failTable tr:nth-child(even) td.action-cell {
+  background: #f8fbfd !important;
+}
+
+#failTable tr:hover td.action-cell {
+  background: #eef7fd !important;
+}
+
+.edit-btn,
+.cancel-btn,
+.export-btn {
+  border: 0;
+  min-width: 44px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* ===== EDIT BUTTON ===== */
+.edit-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #1ba4d8, #117eb2);
+  box-shadow: 0 1px 3px rgba(17, 126, 178, 0.2);
+}
+
+.edit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 7px rgba(17, 126, 178, 0.3);
+  background: linear-gradient(135deg, #1fb0e8, #138bc4);
+}
+
+/* ===== CANCEL BUTTON ===== */
+.cancel-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #f53744, #d92633);
+  box-shadow: 0 1px 3px rgba(217, 38, 51, 0.2);
+}
+
+.cancel-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 7px rgba(217, 38, 51, 0.3);
+  background: linear-gradient(135deg, #f84a56, #e02a37);
+}
+
+/* ===== EXPORT BUTTON ===== */
+.export-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #f5a623, #e8941a);
+  box-shadow: 0 1px 3px rgba(232, 148, 26, 0.2);
+}
+
+.export-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 7px rgba(232, 148, 26, 0.3);
+  background: linear-gradient(135deg, #f8b43a, #ec9c22);
+}
+
+/* ===== DISABLED STATE (chung cho cả 3) ===== */
+.edit-btn:disabled,
+.cancel-btn:disabled,
+.export-btn:disabled,
+.edit-btn.permission-disabled,
+.cancel-btn.permission-disabled,
+.export-btn.permission-disabled {
+  color: #8d98a2;
+  background: #e2e7eb !important;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+/* ===== ACTIVE STATE ===== */
+.edit-btn:active:not(:disabled),
+.cancel-btn:active:not(:disabled),
+.export-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+/* ===== EDIT CELL (chứa nút Edit và Cancel) ===== */
+.edit-cell {
+  padding: 0 3px !important;
+  text-align: center;
+  background: #fff !important;
+  display: flex;
+  align-items: center;
+  justify-content: left;
+  gap: 3px;
+}
+
+/* ===== ACTION CELL (chứa nút Export) ===== */
+#failTable td.action-cell {
+  text-align: center;
+  vertical-align: middle;
+  padding: 2px 3px;
+  background: #fff !important;
+}
+
+#failTable tr:nth-child(even) td.action-cell {
+  background: #f8fbfd !important;
+}
+
+#failTable tr:hover td.action-cell {
+  background: #eef7fd !important;
+}
+
+/* ===== ACTION HEADER ===== */
+#failTable thead th.action-header {
+  height: 31px;
+  color: #4a3a05;
+  background: #fff4cf;
+  font-size: 10px;
+}
+
+/* ===== EDIT HEADER ===== */
+#failTable thead th.edit-header {
+  color: #fff;
+  background: #0f91c8;
+  font-size: 10px;
 }

@@ -10,9 +10,10 @@ async function findUserByUserNoAndPassword({ user_no, password }) {
     .input("password", sql.VarChar(255), password)
     .query(`
       SELECT
-        id, user_no, username, password, can_edit,
-        created_at, updated_at, last_login_at, created_by
-      FROM fail_material_users
+        f.id, f.user_no, f.username, e.emp_name, f.password, f.can_edit,
+        f.created_at, f.updated_at, f.last_login_at, f.created_by
+      FROM fail_material_users f
+      INNER JOIN RDS.erp_t8_gi.dbo.bas_emp e on e.emp_no = f.user_no
       WHERE user_no = @user_no AND password = @password
     `);
 

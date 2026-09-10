@@ -6,6 +6,7 @@ const {
   upsertSolution,
   deleteSolution,
   healthCheck,
+  exportRework,
 } = require("../controllers/failMaterials.controller");
 const { authenticateToken, requireEditPermission } = require("../middleware/auth.middleware");
 
@@ -20,6 +21,8 @@ router.post("/solution", authenticateToken, requireEditPermission, upsertSolutio
 
 // DELETE /api/fail-materials/solution - Xóa solution
 router.delete("/solution", authenticateToken, requireEditPermission, deleteSolution);
+
+router.post("/export", authenticateToken, requireEditPermission, exportRework);
 
 // GET /api/fail-materials/health - Kiểm tra kết nối DB
 router.get("/health", healthCheck);

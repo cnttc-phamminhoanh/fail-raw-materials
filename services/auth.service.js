@@ -20,13 +20,13 @@ async function login({ user_no, password }) {
   }
 
   // Update last login
-  await authRepository.updateLastLogin(user.user_id);
+  await authRepository.updateLastLogin(user.user_no);
 
   // Create JWT
   const token = jwt.sign(
     {
       user_no: user.user_no,
-      username: user.username,
+      username: user.username || user.emp_name || user.user_no,
       can_edit: Boolean(user.can_edit),
     },
     process.env.JWT_SECRET,

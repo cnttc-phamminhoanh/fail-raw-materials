@@ -79,9 +79,12 @@ async function upsertSolution(req, res) {
     });
   } catch (error) {
     console.error("Error in upsertSolution:", error);
-    res.status(500).json({
+
+    const statusCode = error.statusCode || 500;
+
+    res.status(statusCode).json({
       success: false,
-      message: "Failed to save solution",
+      message: error.message || "Failed to save solution",
       error: error.message,
     });
   }
@@ -113,9 +116,12 @@ async function deleteSolution(req, res) {
     });
   } catch (error) {
     console.error("Error in deleteSolution:", error);
-    res.status(500).json({
+
+    const statusCode = error.statusCode || 500;
+
+    res.status(statusCode).json({
       success: false,
-      message: "Failed to delete solution",
+      message: error.message || "Failed to delete solution",
       error: error.message,
     });
   }
@@ -152,10 +158,89 @@ async function healthCheck(req, res) {
   }
 }
 
+const HANDLING_TYPE_MAP = {
+  'returnedInternal': 'Returned Internal',
+  'returnedCustoms': 'Returned Customs',
+  'destroyedInternal': 'Destroyed Internal',
+  'destroyedCustoms': 'Destroyed Customs'
+};
+
+async function exportRework(req, res) {
+  try {
+    const {
+      tempReceiptNo,
+      tempReceiptId,
+      handlingType,
+      quantity
+    } = req.body;
+
+    const userNo = req.user.user_no;
+
+    // ===== VALIDATION =====
+    if (!tempReceiptNo || !tempReceiptId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields: tempReceiptNo, tempReceiptId",
+      });
+    }
+
+    if (!handlingType || !HANDLING_TYPE_MAP[handlingType]) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid handling type'
+      });
+    }
+
+    if (!quantity || quantity <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Quantity must be greater than 0'
+      });
+    }
+
+    if (!userNo) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized'
+      });
+    }
+
+    const actualSol = HANDLING_TYPE_MAP[handlingType];
+
+    await failMaterialsService.exportRework({
+      tempReceiptNo,
+      tempReceiptId,
+      handlingType: actualSol,
+      quantity,
+      updater: userNo,
+    });
+
+    res.json({
+      success: true,
+      message: 'Export successful',
+      data: {
+        tempReceiptNo,
+        tempReceiptId,
+        handlingType: actualSol,
+        quantity,
+        exportedAt: new Date().toISOString(),
+      }
+    });
+  } catch (error) {
+    console.error("Error in exportRework:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to export rework",
+      error: error.message,
+    });
+  }
+}
+
 module.exports = {
   getFailMaterials,
   getFailMaterialsPaginated,
   upsertSolution,
   deleteSolution,
   healthCheck,
+  exportRework
 };

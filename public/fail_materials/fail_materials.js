@@ -97,13 +97,14 @@
     { key: "solution", label: "Solution", width: 129, align: "left", solution: true, group: "solution" },
     { key: "solutionUpdater", label: "Solution<br>Updater", width: 62, solution: true, group: "solution" },
     { key: "updateTime", label: "Update<br>Time", width: 128, solution: true, group: "solution" },
-    { key: "edit", label: "Action", width: 96, edit: true, group: "solution" },
+    { key: "edit", label: "Action", width: 98, edit: true, group: "solution" },
     { key: "status", label: "", width: 5, status: true, group: "actual" },
     { key: "returnedInternal", label: "Returned<br>Internal",width: 58, actual: true, group: "actual" },
     { key: "returnedCustoms", label: "Returned<br>Customs",width: 58, actual: true, group: "actual"},
     { key: "destroyedInternal", label: "Destroyed<br>Internal",width: 60, actual: true, group: "actual" },
     { key: "destroyedCustoms", label: "Destroyed<br>Customs",width: 60, actual: true, group: "actual" },
     { key: "remainQty", label: "Remain<br>Qty", width: 66, number: true, actual: true, group: "actual"},
+    { key: "remainAction", label: "Action", width: 53, actualAction: true, group: "actual" },
     { key: "replacementQty", label: "Replacement<br>Qty", width: 80, number: true },
     { key: "newLotNo", label: "New Lot No.", width: 80, align: "left" },
   ];
@@ -129,6 +130,20 @@
     solutionForm: document.getElementById("solutionForm"),
     closeModalBtn: document.getElementById("closeModalBtn"),
     cancelBtn: document.getElementById("cancelBtn"),
+
+    // Thêm các element cho export modal
+    exportModal: document.getElementById("exportModal"),
+    exportModalInfo: document.getElementById("exportModalInfo"),
+    exportTypeSelect: document.getElementById("exportTypeSelect"),
+    exportQuantity: document.getElementById("exportQuantity"),
+    exportForm: document.getElementById("exportForm"),
+    closeExportModalBtn: document.getElementById("closeExportModalBtn"),
+    cancelExportBtn: document.getElementById("cancelExportBtn"),
+    maxExportQty: document.getElementById("maxExportQty"),
+    exportTempReceipt: document.getElementById("exportTempReceipt"),
+    exportTempID: document.getElementById("exportTempID"),
+    exportLotNo: document.getElementById("exportLotNo"),
+    exportRemainQty: document.getElementById("exportRemainQty"),
   };
 
   function formatDateTime(iso) {
@@ -146,12 +161,18 @@
   }
 
   function hasActualHandling(row) {
-    return [
+    const values = [
       row.returnedInternal,
       row.returnedCustoms,
       row.destroyedInternal,
       row.destroyedCustoms,
-    ].some((v) => v !== null && v !== undefined && v !== "");
+    ];
+
+    return values.some((v) => {
+      if (v === null || v === undefined || v === "") return false;
+      const num = Number(v);
+      return !isNaN(num) && num > 0;
+    });
   }
 
   function formatNumber(value) {
@@ -307,7 +328,8 @@
 
         if (col.reject) colClass = "reject-header";
         else if (col.group === "solution") colClass = "solution-sub";
-        else if (col.actual) colClass = "actual-sub";
+        else if (col.actual && !col.actualAction) colClass = "actual-sub";
+        else if (col.actualAction) colClass = "action-header"; // Style cho cột action
         else if (col.status) colClass = "status-header";
         else if (col.edit) colClass = "edit-header";
 
@@ -369,8 +391,6 @@
         updateTime: row.updateTime
       } : null;
 
-      // const editable = true;
-
       const actual = hasActualHandling(row);
       let html = `<tr>`;
 
@@ -380,15 +400,103 @@
           return;
         }
         
+        // if (col.key === "edit") {
+        //   const hasSolution = solution !== null;
+        //   const authenticated = Auth.isAuthenticated();
+        //   const user = Auth.getUser();
+        //   const canEdit = user?.can_edit === true;
+
+        //   // Kiểm tra có actual handling không
+        //   const hasActual = hasActualHandling(row);
+          
+        //   // Disabled nếu:
+        //   // 1. Đã login nhưng không có quyền edit
+        //   // 2. Đã có actual handling (không cho sửa/cancel solution)
+        //   const isDisabled = (authenticated && !canEdit) || hasActual;
+
+        //   // Tooltip cho Edit
+        //   let editTitle = 'Edit solution';
+        //   if (!authenticated) {
+        //     editTitle = 'Please login to edit';
+        //   } else if (!canEdit) {
+        //     editTitle = 'You do not have permission to edit';
+        //   } else if (hasActual) {
+        //     editTitle = 'Cannot edit: this record has actual handling data';
+        //   }
+
+        //   // Tooltip cho Cancel
+        //   let cancelTitle = 'Cancel solution';
+        //   if (!authenticated) {
+        //     cancelTitle = 'Please login to cancel';
+        //   } else if (!canEdit) {
+        //     cancelTitle = 'You do not have permission to cancel solution';
+        //   } else if (hasActual) {
+        //     cancelTitle = 'Cannot cancel: this record has actual handling data';
+        //   }
+
+        //   html += `
+        //     <td class="edit-cell" data-col-key="edit">
+        //       <button
+        //         class="edit-btn ${isDisabled ? "permission-disabled" : ""}"
+        //         data-index="${filteredIndex}"
+        //         ${isDisabled ? 'disabled' : ''}
+        //         title="${!authenticated ? 'Please login to edit' : isDisabled ? 'You do not have permission to edit' : 'Edit solution'}"
+        //       >
+        //         Edit
+        //       </button>
+        //       ${
+        //         hasSolution
+        //           ? `
+        //             <button
+        //               class="cancel-btn ${isDisabled ? "permission-disabled" : ""}"
+        //               data-index="${filteredIndex}"
+        //               ${isDisabled ? 'disabled' : ''}
+        //               title="${!authenticated ? 'Please login to cancel' : isDisabled ? 'You do not have permission to cancel solution' : 'Cancel solution'}"
+        //             >
+        //               Cancel
+        //             </button>
+        //           `
+        //           : ""
+        //       }
+        //     </td>
+        //   `;
+        //   return;
+        // }
+
+
         if (col.key === "edit") {
           const hasSolution = solution !== null;
           const authenticated = Auth.isAuthenticated();
           const user = Auth.getUser();
           const canEdit = user?.can_edit === true;
+
+          // Kiểm tra có actual handling không
+          const hasActual = hasActualHandling(row);
           
-          // Nếu chưa đăng nhập => không disabled (để click vào và redirect login)
-          // Nếu đã login nhưng không có quyền => disabled
-          const isDisabled = authenticated && !canEdit;
+          // Disabled nếu:
+          // 1. Đã login nhưng không có quyền edit
+          // 2. Đã có actual handling (không cho sửa/cancel solution)
+          const isDisabled = (authenticated && !canEdit) || hasActual;
+
+          // Tooltip cho Edit
+          let editTitle = 'Edit solution';
+          if (!authenticated) {
+            editTitle = 'Please login to edit';
+          } else if (!canEdit) {
+            editTitle = 'You do not have permission to edit';
+          } else if (hasActual) {
+            editTitle = 'Cannot edit: this record has actual handling data';
+          }
+
+          // Tooltip cho Cancel
+          let cancelTitle = 'Cancel solution';
+          if (!authenticated) {
+            cancelTitle = 'Please login to cancel';
+          } else if (!canEdit) {
+            cancelTitle = 'You do not have permission to cancel solution';
+          } else if (hasActual) {
+            cancelTitle = 'Cannot cancel: this record has actual handling data';
+          }
 
           html += `
             <td class="edit-cell" data-col-key="edit">
@@ -396,7 +504,7 @@
                 class="edit-btn ${isDisabled ? "permission-disabled" : ""}"
                 data-index="${filteredIndex}"
                 ${isDisabled ? 'disabled' : ''}
-                title="${!authenticated ? 'Please login to edit' : isDisabled ? 'You do not have permission to edit' : 'Edit solution'}"
+                title="${escapeHtml(editTitle)}"
               >
                 Edit
               </button>
@@ -407,13 +515,44 @@
                       class="cancel-btn ${isDisabled ? "permission-disabled" : ""}"
                       data-index="${filteredIndex}"
                       ${isDisabled ? 'disabled' : ''}
-                      title="${!authenticated ? 'Please login to cancel' : isDisabled ? 'You do not have permission to cancel solution' : 'Cancel solution'}"
+                      title="${escapeHtml(cancelTitle)}"
                     >
                       Cancel
                     </button>
                   `
                   : ""
               }
+            </td>
+          `;
+          return;
+        }
+
+        // ===== CỘT REMAIN ACTION MỚI =====
+        if (col.key === "remainAction") {
+          const hasRemain = row.remainQty && row.remainQty > 0;
+          const hasSolution = solution !== null;
+          const authenticated = Auth.isAuthenticated();
+          const user = Auth.getUser();
+          const canEdit = user?.can_edit === true;
+          
+          const isDisabled = !authenticated || !canEdit || !hasRemain || !hasSolution;
+
+          let tooltip = 'Export stock';
+          if (!authenticated) tooltip = 'Please login to export';
+          else if (!canEdit) tooltip = 'You do not have permission to export';
+          else if (!hasRemain) tooltip = 'No remain quantity to export';
+          else if (!hasSolution) tooltip = 'Please define solution first';
+
+          html += `
+            <td class="action-cell" data-col-key="remainAction">
+              <button
+                class="export-btn ${isDisabled ? 'permission-disabled' : ''}"
+                data-index="${filteredIndex}"
+                ${isDisabled ? 'disabled' : ''}
+                title="${escapeHtml(tooltip)}"
+              >
+                Export
+              </button>
             </td>
           `;
           return;
@@ -434,7 +573,7 @@
           html += `<td class="solution-text" data-col-key="updateTime" title="${escapeHtml(value)}"><span class="cell-content">${escapeHtml(value)}</span></td>`;
           return;
         }
-  
+
         html += cellHtml(col, row);
       });
 
@@ -542,6 +681,12 @@
       return;
     }
 
+    if (hasActualHandling(currentRow)) {
+      alert("Cannot save solution: this record already has actual handling data.");
+      closeModal();
+      return;
+    }
+
     const payload = {
       tempReceiptNo: currentRow.tempReceiptNo,
       tempReceiptId: currentRow.tempReceiptId,
@@ -596,6 +741,11 @@
 
     if (!row) return;
 
+    if (hasActualHandling(row)) {
+      alert("Cannot cancel solution: this record already has actual handling data.");
+      return;
+    }
+
     try {
       const response = await API.request('/api/fail-materials/solution', {
         method: 'DELETE',
@@ -623,6 +773,151 @@
       console.error('Error cancelling solution:', error);
       alert('Failed to cancel solution: ' + error.message);
     }
+  }
+
+  // ===== EXPORT HANDLING =====
+  let currentExportRow = null;
+
+  function openExportModal(row) {
+    if (!row) return;
+    
+    // Kiểm tra điều kiện
+    if (!row.solution) {
+      alert('Please define solution before exporting.');
+      return;
+    }
+    
+    if (!row.remainQty || row.remainQty <= 0) {
+      alert('No remain quantity to export.');
+      return;
+    }
+
+    currentExportRow = row;
+    
+    // Reset form
+    els.exportTypeSelect.value = '';
+    els.exportQuantity.value = '';
+
+    // Cập nhật thông tin
+    els.exportModalInfo.innerHTML = `
+      <b>Material Code:</b> ${escapeHtml(row.materialCode)}<br>
+      <b>Material Name:</b> ${escapeHtml(row.materialName)}<br>
+      <b>Solution:</b> ${escapeHtml(row.solution)}
+    `;
+    
+    els.exportTempReceipt.textContent = row.tempReceiptNo;
+    els.exportTempID.textContent = row.tempReceiptId;
+    els.exportLotNo.textContent = row.lotNo;
+    els.exportRemainQty.textContent = formatNumber(row.remainQty);
+    els.maxExportQty.textContent = formatNumber(row.remainQty);
+    
+    // Set max attribute cho input
+    els.exportQuantity.max = row.remainQty;
+    els.exportQuantity.placeholder = `Max: ${formatNumber(row.remainQty)}`;
+    
+    els.exportModal.hidden = false;
+    setTimeout(() => els.exportTypeSelect.focus(), 0);
+  }
+
+  function closeExportModal() {
+    els.exportModal.hidden = true;
+    currentExportRow = null;
+  }
+
+  async function handleExportSubmit(event) {
+    event.preventDefault();
+    
+    if (!currentExportRow) return;
+    
+    const type = els.exportTypeSelect.value;
+    const quantity = parseFloat(els.exportQuantity.value);
+    
+    // Validate
+    if (!type) {
+      alert('Please select a handling type.');
+      return;
+    }
+    
+    if (!quantity || quantity <= 0) {
+      alert('Please enter a valid quantity.');
+      return;
+    }
+    
+    if (quantity > currentExportRow.remainQty) {
+      alert(`Quantity cannot exceed remain quantity (${formatNumber(currentExportRow.remainQty)}).`);
+      return;
+    }
+
+    // Xác nhận với user
+    const typeLabels = {
+      returnedCustoms: 'Returned Customs',
+      returnedInternal: 'Returned Internal',
+      destroyedCustoms: 'Destroyed Customs',
+      destroyedInternal: 'Destroyed Internal'
+    };
+
+    const confirmed = confirm(
+      `Temp Receipt: ${currentExportRow.tempReceiptNo}\n` +
+      `Lot: ${currentExportRow.lotNo}\n` +
+      `Material: ${currentExportRow.materialCode}\n` +
+      `Handling Type: ${typeLabels[type] || type}\n` +
+      `Quantity: ${formatNumber(quantity)}\n` +
+      `Remain Qty after: ${formatNumber(currentExportRow.remainQty - quantity)}\n\n` +
+      `Are you sure to proceed?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await API.request('/api/fail-materials/export', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          tempReceiptNo: currentExportRow.tempReceiptNo,
+          tempReceiptId: currentExportRow.tempReceiptId,
+          handlingType: type,
+          quantity: quantity,
+          solution: currentExportRow.solution,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Failed to export stock');
+      }
+
+      alert(`Stock exported successfully!\nType: ${typeLabels[type] || type}\nQuantity: ${formatNumber(quantity)}`);
+      
+      closeExportModal();
+      
+      // Refresh data
+      loadData(currentPage);
+    } catch (error) {
+      console.error('Error exporting:', error);
+      alert('Failed to export: ' + error.message);
+    }
+  }
+
+  // Hàm handleExport gốc - sẽ mở modal thay vì export trực tiếp
+  async function handleExport(row) {
+    if (!row) return;
+    
+    // Kiểm tra điều kiện
+    if (!row.solution) {
+      alert('Please define solution before exporting.');
+      return;
+    }
+    
+    if (!row.remainQty || row.remainQty <= 0) {
+      alert('No remain quantity to export.');
+      return;
+    }
+
+    // Mở modal thay vì export trực tiếp
+    openExportModal(row);
   }
 
   function initEvents() {
@@ -682,10 +977,14 @@
 
         const row = rows[Number(editBtn.dataset.index)];
 
+        if (row && hasActualHandling(row)) {
+          alert("Cannot edit solution: this record already has actual handling data.");
+          return;
+        }
+
         if (row) {
           openModal(row);
         }
-
         return;
       }
 
@@ -693,10 +992,8 @@
       const cancelBtn = event.target.closest(".cancel-btn");
 
       if (cancelBtn && !cancelBtn.disabled) {
-        // Chưa login → chuyển /login
         if (!requireAuth()) return;
 
-        // Đã login → kiểm tra quyền
         const user = Auth.getUser();
 
         if (user?.can_edit !== true) {
@@ -706,15 +1003,33 @@
 
         const row = rows[Number(cancelBtn.dataset.index)];
 
-        if (
-          row &&
-          confirm(
-            `Are you sure you want to cancel the solution for "${row.tempReceiptNo}"?`
-          )
-        ) {
-          cancelSolution(row);
+        if (row && hasActualHandling(row)) {
+          alert("Cannot cancel solution: this record already has actual handling data.");
+          return;
         }
 
+        if (row && confirm(`Are you sure you want to cancel the solution for "${row.tempReceiptNo}"?`)) {
+          cancelSolution(row);
+        }
+        return;
+      }
+
+      // Export button
+      const exportBtn = event.target.closest(".export-btn");
+
+      if (exportBtn && !exportBtn.disabled) {
+        if (!requireAuth()) return;
+
+        const user = Auth.getUser();
+        if (user?.can_edit !== true) {
+          alert("You do not have permission to export.");
+          return;
+        }
+
+        const row = rows[Number(exportBtn.dataset.index)];
+        if (row) {
+          handleExport(row);
+        }
         return;
       }
     });
@@ -725,8 +1040,21 @@
     els.modal.addEventListener("click", (event) => {
       if (event.target === els.modal) closeModal();
     });
+
+    // Export modal events
+    els.exportForm.addEventListener("submit", handleExportSubmit);
+    els.closeExportModalBtn.addEventListener("click", closeExportModal);
+    els.cancelExportBtn.addEventListener("click", closeExportModal);
+    els.exportModal.addEventListener("click", (event) => {
+      if (event.target === els.exportModal) closeExportModal();
+    });
+    
+    // Close export modal with Escape key
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !els.modal.hidden) closeModal();
+      if (event.key === "Escape") {
+        if (!els.modal.hidden) closeModal();
+        if (!els.exportModal.hidden) closeExportModal();
+      }
     });
   }
 
@@ -771,16 +1099,17 @@
   }
 
   // Gọi updateUserUI sau khi render
-  // Thêm vào cuối hàm render()
   function render() {
     renderColGroup();
     renderHead();
+
     const limitSelect = document.getElementById('limitSelect');
+
     if (limitSelect) {
       currentLimit = parseInt(limitSelect.value, 10);
     }
     
-    updateUserUI(); // <--- THÊM DÒNG NÀY
+    updateUserUI();
     loadData(1);
   }
 

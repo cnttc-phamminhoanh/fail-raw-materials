@@ -1,5 +1,37 @@
 const { getBIPool, sql } = require("../config/sql_db");
 
+// ===== HELPER: Kiểm tra có actual handling chưa =====
+async function checkHasActualHandling(pool, tempReceiptNo, tempReceiptId) {
+  const query = `
+    SELECT 
+      ISNULL(SUM(CASE WHEN ow.def16 = '01' THEN ow.sheet_qty ELSE 0 END), 0) AS returned_internal,
+      ISNULL(SUM(CASE WHEN ow.def16 = '02' THEN ow.sheet_qty ELSE 0 END), 0) AS returned_customs,
+      ISNULL(SUM(CASE WHEN ow.def16 = '03' THEN ow.sheet_qty ELSE 0 END), 0) AS destroyed_internal,
+      ISNULL(SUM(CASE WHEN ow.def16 = '04' THEN ow.sheet_qty ELSE 0 END), 0) AS destroyed_customs
+    FROM RDS.erp_t8_gi.dbo.v_pur_notice_detail n WITH (NOLOCK)
+    LEFT JOIN RDS.erp_t8_gi.dbo.scm_other_out2 ow 
+      ON ow.made_lot = n.made_lot AND ow.goods_no = n.goods_no
+    WHERE n.sheet_no = @noticeNo AND n.sheet_id = @noticeId
+  `;
+
+  const result = await pool.request()
+    .input("noticeNo", sql.VarChar(20), tempReceiptNo)
+    .input("noticeId", sql.Int, parseInt(tempReceiptId, 10))
+    .query(query);
+
+  if (result.recordset.length === 0) {
+    return false;
+  }
+
+  const row = result.recordset[0];
+  return (
+    Number(row.returned_internal) > 0 ||
+    Number(row.returned_customs) > 0 ||
+    Number(row.destroyed_internal) > 0 ||
+    Number(row.destroyed_customs) > 0
+  );
+}
+
 async function getFailMaterials() {
   try {
     const pool = await getBIPool();
@@ -209,10 +241,18 @@ async function getTotalCount({ search = "", date = "" }) {
   }
 }
 
-// Cập nhật hoặc insert solution vào database
+// Cập nhật solution
 async function upsertSolution({ tempReceiptNo, tempReceiptId, solution, updater }) {
   try {
     const pool = await getBIPool();
+
+    const hasActual = await checkHasActualHandling(pool, tempReceiptNo, tempReceiptId);
+
+    if (hasActual) {
+      const error = new Error('Cannot update solution: this record already has actual handling data (exported).');
+      error.statusCode = 403;
+      throw error;
+    }
 
     // Kiểm tra xem record đã tồn tại chưa
     const checkQuery = `
@@ -251,24 +291,6 @@ async function upsertSolution({ tempReceiptNo, tempReceiptId, solution, updater 
 
       return { success: true, action: 'updated' };
     }
-    // else {
-    //   // Insert new record
-    //   const insertQuery = `
-    //     INSERT INTO RDS.erp_t8_gi.dbo.pur_notice_sol 
-    //     (notice_no, notice_id, solution, modified_at, modified_user)
-    //     VALUES (@noticeNo, @noticeId, @solution, @modifiedAt, @modifiedUser)
-    //   `;
-
-    //   await pool.request()
-    //     .input("noticeNo", sql.VarChar, tempReceiptNo)
-    //     .input("noticeId", sql.Int, parseInt(tempReceiptId, 10))
-    //     .input("solution", sql.NVarChar, solution)
-    //     .input("modifiedAt", sql.DateTime, now)
-    //     .input("modifiedUser", sql.VarChar, updater || 'ADMIN')
-    //     .query(insertQuery);
-
-    //   return { success: true, action: 'inserted' };
-    // }
   } catch (error) {
     console.error("Error in upsertSolution:", error);
     throw error;
@@ -278,6 +300,14 @@ async function upsertSolution({ tempReceiptNo, tempReceiptId, solution, updater 
 async function cancelSolution({ tempReceiptNo, tempReceiptId }) {
   try {
     const pool = await getBIPool();
+
+    const hasActual = await checkHasActualHandling(pool, tempReceiptNo, tempReceiptId);
+
+    if (hasActual) {
+      const error = new Error('Cannot cancel solution: this record already has actual handling data (exported).');
+      error.statusCode = 403;
+      throw error;
+    }
 
     const cancelQuery = `
       UPDATE RDS.erp_t8_gi.dbo.pur_notice_sol set solution = null
@@ -296,10 +326,40 @@ async function cancelSolution({ tempReceiptNo, tempReceiptId }) {
   }
 }
 
+// Export rework - gọi stored procedure pro_issue_rework_whs_gi
+async function exportRework({ tempReceiptNo, tempReceiptId, handlingType, quantity, updater }) {
+  try {
+    const pool = await getBIPool();
+
+    const query = `
+      EXEC RDS.erp_t8_gi.dbo.pro_issue_rework_whs_gi
+        @notice_no = @noticeNo,
+        @notice_id = @noticeId,
+        @actural_sol = @acturalSol,
+        @qty = @qty,
+        @user_no = @userNo
+    `;
+
+    await pool.request()
+      .input("noticeNo", sql.VarChar(20), tempReceiptNo)
+      .input("noticeId", sql.Int, parseInt(tempReceiptId, 10))
+      .input("acturalSol", sql.VarChar(50), handlingType)
+      .input("qty", sql.Numeric(18, 8), quantity)
+      .input("userNo", sql.VarChar(20), updater || 'ADMIN')
+      .query(query);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in exportRework:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   getFailMaterials,
   getFailMaterialsPaginated,
   getTotalCount,
   upsertSolution,
   cancelSolution,
+  exportRework,
 };

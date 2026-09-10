@@ -92,9 +92,26 @@ async function cancelSolution({ tempReceiptNo, tempReceiptId }) {
   }
 }
 
+// Export rework
+async function exportRework({ tempReceiptNo, tempReceiptId, handlingType, quantity, updater }) {
+  try {
+    return await failMaterialsRepository.exportRework({
+      tempReceiptNo,
+      tempReceiptId,
+      handlingType,
+      quantity,
+      updater,
+    });
+  } catch (error) {
+    console.error("Error in exportRework:", error);
+    throw error;
+  }
+}
+
 module.exports = {
   getFailMaterials,
   getFailMaterialsPaginated,
   updateSolution,
   cancelSolution,
+  exportRework
 };
