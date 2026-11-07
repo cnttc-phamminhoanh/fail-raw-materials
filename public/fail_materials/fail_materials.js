@@ -1,14 +1,13 @@
 (() => {
   "use strict";
 
-  const SOLUTIONS = [
-    "AOD / 选用",
-    "Supplier Pays Rework Cost On Site / 供应商支付返工费",
-    "Replacement Material by Vendor / 供应商补料",
-    "Using the Original PO Number / 用回原PO号",
-    "Return to Vendor / 退回供应商 (Y/N)",
-    "Scrap / 报废",
-  ];
+const SOLUTIONS = [
+  "AOD / 选用",
+  "Suppliers paid rework cost on site / 供应商支付返工费",
+  "Replaced Material by Vendor / 供应商补料 (Using original PO 用回原PO号)",
+  "Return to Vendor / 退回供应商 (Y/N)",
+  "Scrap / 报废",
+];
 
   const API_BASE = '/api/fail-materials';
 
@@ -29,17 +28,24 @@
   let currentLimit = 25;
   let totalRecords = 0;
   let totalPages = 1;
+  let pendingLoads = 0;
+  let toastTimeout;
+
+  function showSuccess(message) {
+    const toast = document.getElementById("successToast");
+    clearTimeout(toastTimeout);
+    toast.textContent = message;
+    toast.hidden = false;
+    toastTimeout = setTimeout(() => { toast.hidden = true; }, 4500);
+  }
 
   async function fetchDataFromAPI(search = '', date = '', page = 1, limit = 25) {
     try {
       let url = `${API_BASE}/paginated?page=${page}&limit=${limit}`;
-
       if (search) url += `&search=${encodeURIComponent(search)}`;
       if (date) url += `&date=${date}`;
-
       const response = await API.request(url, { method: 'GET' });
       if (!response.ok) throw new Error('Failed to fetch data');
-
       const result = await response.json();
       if (!result.success) throw new Error(result.message || 'API returned error');
 
@@ -62,10 +68,20 @@
     
     currentPage = page;
     
-    const data = await fetchDataFromAPI(search, date, currentPage, currentLimit);
-    rows = data;
-    renderBody(rows);
-    updatePagination();
+    const loading = document.getElementById("dataLoading");
+    pendingLoads++;
+    loading.hidden = false;
+    loading.parentElement.setAttribute("aria-busy", "true");
+    try {
+      const data = await fetchDataFromAPI(search, date, currentPage, currentLimit);
+      rows = data;
+      renderBody(rows);
+      updatePagination();
+    } finally {
+      pendingLoads--;
+      loading.hidden = pendingLoads === 0;
+      loading.parentElement.setAttribute("aria-busy", String(pendingLoads > 0));
+    }
   }
 
   function updatePagination() {
@@ -80,9 +96,10 @@
   }
 
   const columns = [
-    { key: "supplier", label: "Supplier", width: 104, align: "left" },
     { key: "poNo", label: "PO No.", width: 98},
     { key: "poId", label: "PO ID", width: 38 },
+    { key: "entryDate",label: "Date of<br>Entry",width: 95,date: true,},
+    { key: "supplier", label: "Supplier", width: 104, align: "left" },
     { key: "orderQty", label: "Order<br>Qty", width: 54, number: true },
     { key: "tempReceiptNo", label: "Temp Receipt No.", width: 105 },
     { key: "tempReceiptId", label: "Temp<br>Receipt<br>ID", width: 50 },
@@ -93,7 +110,10 @@
     { key: "focQty", label: "FOC<br>Qty", width: 56, number: true, group: "material" },
     { key: "rejectQty", label: "Reject<br>Qty", width: 73, number: true, reject: true, group: "material" },
     { key: "failPercent", label: "% Fail", width: 50, group: "material" },
-    { key: "orderPrice", label: "Order<br>Price", width: 74, group: "material" },
+    { key: "orderPrice", label: "Order<br>Price", width: 130, group: "material" },
+    { key: "totalAmount",label: "Total<br>Amount",width: 140,number: true,group: "material",},
+    { key: "exchangeRate", label: "Exchange Rate<br>(VND per USD)", width: 120, number: true, group: "material" },
+    { key: "amountUsd", label: "Amount<br>(USD)", width: 110, number: true, group: "material" },
     { key: "solution", label: "Solution", width: 129, align: "left", solution: true, group: "solution" },
     { key: "solutionUpdater", label: "Solution<br>Updater", width: 62, solution: true, group: "solution" },
     { key: "updateTime", label: "Update<br>Time", width: 128, solution: true, group: "solution" },
@@ -145,6 +165,15 @@
     exportLotNo: document.getElementById("exportLotNo"),
     exportRemainQty: document.getElementById("exportRemainQty"),
   };
+
+  function formatEntryDate(value) {
+  if (!value) return "";
+
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return "";
+
+  return `${day}/${month}/${year}`;
+}
 
   function formatDateTime(iso) {
     if (!iso) return "";
@@ -376,15 +405,57 @@
       classes.push("actual-has-value");
 
     let value = row[col.key];
-    if (col.price) value = formatPrice(value);
+    if (col.key === "totalAmount") {
+      const amount = formatNumber(value);
+      value = amount === "" ? "" : [amount, row.currency].filter(Boolean).join(" ");
+    }
+    else if (col.key === "exchangeRate") {
+      value = formatNumber(value) || "N/A";
+    }
+    else if (col.key === "amountUsd") {
+      const amount = formatNumber(value);
+      value = amount === "" ? "" : `${amount} USD`;
+    }
+    else if (col.date) value = formatEntryDate(value);
+    else if (col.price) value = formatPrice(value);
     else if (col.number) value = formatNumber(value);
     value = displayValue(value);
 
     return `<td class="${classes.join(" ")}" data-col-key="${col.key}" title="${escapeHtml(value)}"><span class="cell-content">${escapeHtml(value)}</span></td>`;
   }
+function getGroupRowspan(data, startIndex, includePoId = false) {
+  const firstRow = data[startIndex];
 
+  if (!firstRow.poNo) return 1;
+  if (includePoId && !firstRow.poId) return 1;
+
+  let count = 1;
+
+  for (let i = startIndex + 1; i < data.length; i++) {
+    const nextRow = data[i];
+
+    if (nextRow.poNo !== firstRow.poNo) break;
+    if (includePoId && nextRow.poId !== firstRow.poId) break;
+
+    count++;
+  }
+
+  return count;
+}
   function renderBody(filteredRows = rows) {
     els.tableBody.innerHTML = filteredRows.map((row, filteredIndex) => {
+    const previousRow = filteredRows[filteredIndex - 1];
+
+    const isSamePO =
+    Boolean(previousRow) &&
+    Boolean(row.poNo) &&
+    row.poNo === previousRow.poNo;
+
+    const isSamePOGroup =
+    isSamePO &&
+    Boolean(row.poId) &&
+    row.poId === previousRow.poId;
+
       const solution = row.solution ? {
         solution: row.solution,
         updater: row.solutionUpdater,
@@ -395,6 +466,40 @@
       let html = `<tr>`;
 
       columns.forEach(col => {
+     if (col.key === "poNo") {
+  if (!isSamePO) {
+    const rowspan = getGroupRowspan(filteredRows, filteredIndex);
+    const value = escapeHtml(row.poNo || "");
+
+    html += `
+      <td class="po-merged-cell"
+          data-col-key="poNo"
+          rowspan="${rowspan}"
+          title="${value}">
+        <span class="cell-content">${value}</span>
+      </td>
+    `;
+  }
+  return;
+}
+
+if (col.key === "poId") {
+  if (!isSamePOGroup) {
+    const rowspan = getGroupRowspan(filteredRows, filteredIndex, true);
+    const value = escapeHtml(row.poId || "");
+
+    html += `
+      <td class="po-merged-cell"
+          data-col-key="poId"
+          rowspan="${rowspan}"
+          title="${value}">
+        <span class="cell-content">${value}</span>
+      </td>
+    `;
+  }
+  return;
+}
+
         if (col.key === "status") {
           html += `<td class="status-cell" data-col-key="status" title="${actual ? "Actual handling data exists" : "No actual handling data"}"><span class="status-dot ${actual ? "ok" : "pending"}"></span></td>`;
           return;
@@ -651,7 +756,17 @@
 
     els.solutionSelect.innerHTML = SOLUTIONS.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("");
     
-    els.solutionSelect.value = existing?.solution || SOLUTIONS[0];
+const legacySolutions = {
+  "Supplier Pays Rework Cost On Site / 供应商支付返工费": SOLUTIONS[1],
+  "Replacement Material by Vendor / 供应商补料": SOLUTIONS[2],
+  "Using the Original PO Number / 用回原PO号": SOLUTIONS[2],
+};
+
+const selectedSolution =
+  legacySolutions[existing?.solution] || existing?.solution;
+
+els.solutionSelect.value =
+  SOLUTIONS.includes(selectedSolution) ? selectedSolution : existing ? "" : SOLUTIONS[0];
     els.modalAction.textContent = existing ? "UPDATE" : "INSERT";
     els.modalInfo.innerHTML = `<b>Temp Receipt:</b> ${escapeHtml(row.tempReceiptNo)} &nbsp; <b>ID:</b> ${escapeHtml(row.tempReceiptId)}<br><b>Lot:</b> ${escapeHtml(row.lotNo)} &nbsp; <b>Material:</b> ${escapeHtml(row.materialCode)} - ${escapeHtml(row.materialName)}`;
     els.modal.hidden = false;
@@ -715,6 +830,7 @@
 
       renderBody(rows);
       closeModal();
+      showSuccess("Solution saved successfully.");
     } catch (error) {
       console.error('Error saving solution:', error);
       alert('Failed to save solution: ' + error.message);

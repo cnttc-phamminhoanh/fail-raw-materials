@@ -947,6 +947,50 @@ body.resizing {
 }
 
 /* ===== USER SECTION ===== */
+.help-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid rgba(159, 215, 244, 0.4);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e7f6ff;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.help-link:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #9fd7f4;
+}
+
+.help-link:focus-visible {
+  outline: 2px solid #9fd7f4;
+  outline-offset: 3px;
+}
+
+.help-link svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  .help-link span,
+  .help-link .help-external-icon {
+    display: none;
+  }
+
+  .help-link {
+    width: 38px;
+    padding: 8px;
+  }
+}
+
 .user-section {
   display: flex;
   align-items: center;
@@ -1241,4 +1285,66 @@ body.resizing {
   color: #fff;
   background: #0f91c8;
   font-size: 10px;
+}
+
+#failTable tbody td.po-merged-cell {
+  vertical-align: middle;
+  text-align: center;
+  font-weight: 700;
+  /* color: #164f77;
+  background: #edf4fa; */
+  border-right: 1px solid #bdcddd;
+  border-bottom: 2px solid #bdcddd;
+}
+/* Data loading and save feedback */
+.table-card {
+  position: relative;
+}
+.data-loading {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.88);
+  color: #36566f;
+  font-size: 13px;
+  font-weight: 600;
+}
+.data-loading[hidden], .success-toast[hidden] {
+  display: none;
+}
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #d8e7f0;
+  border-top-color: #168dc5;
+  border-radius: 50%;
+  animation: materials-loading 0.8s linear infinite;
+}
+@keyframes materials-loading {
+  to { transform: rotate(360deg); }
+}
+.success-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 200;
+  max-width: calc(100vw - 40px);
+  padding: 14px 20px;
+  border: 1px solid #b5dfc6;
+  border-left: 4px solid #219653;
+  border-radius: 10px;
+  background: #edf9f1;
+  color: #17663a;
+  box-shadow: 0 8px 24px rgba(12, 42, 65, 0.15);
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner { animation-duration: 2s; }
 }
