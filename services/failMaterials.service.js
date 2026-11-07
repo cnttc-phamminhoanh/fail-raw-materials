@@ -1,8 +1,24 @@
 const failMaterialsRepository = require("../repositories/failMaterials.repository");
+const SOLUTION_CODES = new Map([
+  ["AOD / 选用", "a"],
+  ["Suppliers paid rework cost on site / 供应商支付返工费", "b"],
+  [
+    "Replaced Material by Vendor / 供应商补料 (Using original PO 用回原PO号)",
+    "c",
+  ],
+  ["Return to Vendor / 退回供应商 (Y/N)", "d"],
+  ["Scrap / 报废", "e"],
+]);
+
+
+const SOLUTION_LABELS = new Map(
+  [...SOLUTION_CODES].map(([label, code]) => [code, label])
+);
 
 // Transform dữ liệu từ database sang format frontend
 function transformRow(row) {
   return {
+    entryDate: row.entry_date || null,
     supplier: row.supplier || "",
     poNo: row.po_no || "",
     poId: row.po_id ? String(row.po_id) : "",
@@ -17,7 +33,11 @@ function transformRow(row) {
     rejectQty: row.reject_qty || 0,
     failPercent: row.fail_percent ? `${(row.fail_percent * 100).toFixed(0)}%` : "0%",
     orderPrice: row.unit_no || "",
-    solution: row.solution || "",
+    totalAmount: row.amt_return ?? null,
+    currency: (row.currency || "").trim().toUpperCase(),
+    exchangeRate: row.exchange_rate ?? null,
+    amountUsd: row.amount_usd ?? null,
+    solution: SOLUTION_LABELS.get(String(row.solution_code || "").trim()) || "",
     solutionUpdater: row.solution_updater || "",
     updateTime: row.update_time || null,
     returnedInternal: row.returned_internal || null,
@@ -66,18 +86,26 @@ async function getFailMaterialsPaginated({ page = 1, limit = 50, search = "", da
 }
 
 // Cập nhật solution
-async function updateSolution({ tempReceiptNo, tempReceiptId, solution, updater }) {
-  try {
-    return await failMaterialsRepository.upsertSolution({
-      tempReceiptNo,
-      tempReceiptId,
-      solution,
-      updater,
-    });
-  } catch (error) {
-    console.error("Error in updateSolution:", error);
+async function updateSolution({
+  tempReceiptNo,
+  tempReceiptId,
+  solution,
+  updater,
+}) {
+  const solutionCode = SOLUTION_CODES.get(solution);
+
+  if (!solutionCode) {
+    const error = new Error("Invalid solution");
+    error.statusCode = 400;
     throw error;
   }
+
+  return failMaterialsRepository.upsertSolution({
+    tempReceiptNo,
+    tempReceiptId,
+    solutionCode,
+    updater,
+  });
 }
 
 async function cancelSolution({ tempReceiptNo, tempReceiptId }) {
