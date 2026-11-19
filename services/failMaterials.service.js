@@ -63,11 +63,11 @@ async function getFailMaterials() {
 }
 
 //Lấy danh sách FAIL materials với phân trang
-async function getFailMaterialsPaginated({ page = 1, limit = 50, search = "", date = "" }) {
+async function getFailMaterialsPaginated({ page = 1, limit = 50, search = "", date = "", startDate = date, endDate = startDate, solution = "" }) {
   try {
     const [data, total] = await Promise.all([
-      failMaterialsRepository.getFailMaterialsPaginated({ page, limit, search, date }),
-      failMaterialsRepository.getTotalCount({ search, date }),
+      failMaterialsRepository.getFailMaterialsPaginated({ page, limit, search, startDate, endDate, solution }),
+      failMaterialsRepository.getTotalCount({ search, startDate, endDate, solution }),
     ]);
 
     return {

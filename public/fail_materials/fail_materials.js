@@ -39,11 +39,13 @@ const SOLUTIONS = [
     toastTimeout = setTimeout(() => { toast.hidden = true; }, 4500);
   }
 
-  async function fetchDataFromAPI(search = '', date = '', page = 1, limit = 25) {
+  async function fetchDataFromAPI(search = '', date = '', page = 1, limit = 25, solution = '', endDate = '') {
     try {
       let url = `${API_BASE}/paginated?page=${page}&limit=${limit}`;
       if (search) url += `&search=${encodeURIComponent(search)}`;
-      if (date) url += `&date=${date}`;
+      if (date) url += `&startDate=${encodeURIComponent(date)}`;
+      if (endDate) url += `&endDate=${encodeURIComponent(endDate)}`;
+      if (solution) url += `&solution=${encodeURIComponent(solution)}`;
       const response = await API.request(url, { method: 'GET' });
       if (!response.ok) throw new Error('Failed to fetch data');
       const result = await response.json();
@@ -63,8 +65,11 @@ const SOLUTIONS = [
   }
 
   async function loadData(page = 1) {
+    if (!els.timeFilter.reportValidity()) return;
     const search = els.searchInput.value.trim();
-    const date = els.timeFilter.value;
+    const date = els.timeFilter.dataset.startDate || '';
+    const endDate = els.timeFilter.dataset.endDate || date;
+    const solution = els.solutionFilter.value;
     
     currentPage = page;
     
@@ -73,7 +78,7 @@ const SOLUTIONS = [
     loading.hidden = false;
     loading.parentElement.setAttribute("aria-busy", "true");
     try {
-      const data = await fetchDataFromAPI(search, date, currentPage, currentLimit);
+      const data = await fetchDataFromAPI(search, date, currentPage, currentLimit, solution, endDate);
       rows = data;
       renderBody(rows);
       updatePagination();
@@ -141,6 +146,7 @@ const SOLUTIONS = [
     pendingCount: document.getElementById("pendingCount"),
     searchInput: document.getElementById("searchInput"),
     timeFilter: document.getElementById("timeFilter"),
+    solutionFilter: document.getElementById("solutionFilter"),
     searchBtn: document.getElementById("searchBtn"),
     resetBtn: document.getElementById("resetBtn"),
     modal: document.getElementById("solutionModal"),
@@ -1037,6 +1043,18 @@ els.solutionSelect.value =
   }
 
   function initEvents() {
+    function updateFilterColors() {
+      [els.searchInput, els.timeFilter].forEach((input) => {
+        input.classList.toggle('has-value', input.value.trim() !== '');
+      });
+    }
+
+    [els.searchInput, els.timeFilter].forEach((input) => {
+      input.addEventListener('input', updateFilterColors);
+      input.addEventListener('change', updateFilterColors);
+    });
+    updateFilterColors();
+
     els.searchBtn.addEventListener('click', () => {
       currentPage = 1; // Reset về trang 1 khi tìm kiếm
       loadData(1);
@@ -1051,8 +1069,11 @@ els.solutionSelect.value =
     });
 
     els.resetBtn.addEventListener('click', () => {
+      document.getElementById('solutionFilter').value = '';
       els.searchInput.value = '';
       els.timeFilter.value = '';
+      els.timeFilter.dispatchEvent(new Event('date-range-reset'));
+      updateFilterColors();
       currentPage = 1;
       loadData(1);
     });

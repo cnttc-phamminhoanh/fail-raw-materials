@@ -135,6 +135,9 @@ async function getFailMaterialsPaginated({
   limit = 50,
   search = "",
   date = "",
+  startDate = date,
+  endDate = startDate,
+  solution = "",
 }) {
   try {
     const pool = await getBIPool();
@@ -157,9 +160,19 @@ async function getFailMaterialsPaginated({
       params.push({ name: "search", value: `%${search}%`, type: sql.NVarChar });
     }
 
-    if (date) {
-      whereClause += ` AND p.def25 >= @date AND p.def25 < DATEADD(DAY, 1, @date)`;
-      params.push({ name: "date", value: date, type: sql.Date });
+    if (startDate) {
+      whereClause += ` AND p.def25 >= @startDate AND p.def25 < DATEADD(DAY, 1, @endDate)`;
+      params.push({ name: "startDate", value: startDate, type: sql.Date });
+      params.push({ name: "endDate", value: endDate, type: sql.Date });
+    }
+
+    if (solution === "pending") {
+      whereClause += " AND NULLIF(LTRIM(RTRIM(p.def39)), '') IS NULL";
+    } else if (solution === "has_solution") {
+      whereClause += " AND NULLIF(LTRIM(RTRIM(p.def39)), '') IS NOT NULL";
+    } else if (solution) {
+      whereClause += " AND LTRIM(RTRIM(p.def39)) = @solution";
+      params.push({ name: "solution", value: solution, type: sql.NVarChar(1) });
     }
 
     const query = `
@@ -267,7 +280,7 @@ END AS amount_usd,
 }
 
 // Lấy tổng số lượng FAIL materials
-async function getTotalCount({ search = "", date = "" }) {
+async function getTotalCount({ search = "", date = "", startDate = date, endDate = startDate, solution = "" }) {
   try {
     const pool = await getBIPool();
 
@@ -288,9 +301,19 @@ async function getTotalCount({ search = "", date = "" }) {
       params.push({ name: "search", value: `%${search}%`, type: sql.NVarChar });
     }
 
-    if (date) {
-            whereClause += ` AND p.def25 >= @date AND p.def25 < DATEADD(DAY, 1, @date)`;
-      params.push({ name: "date", value: date, type: sql.Date });
+    if (startDate) {
+      whereClause += ` AND p.def25 >= @startDate AND p.def25 < DATEADD(DAY, 1, @endDate)`;
+      params.push({ name: "startDate", value: startDate, type: sql.Date });
+      params.push({ name: "endDate", value: endDate, type: sql.Date });
+    }
+
+    if (solution === "pending") {
+      whereClause += " AND NULLIF(LTRIM(RTRIM(p.def39)), '') IS NULL";
+    } else if (solution === "has_solution") {
+      whereClause += " AND NULLIF(LTRIM(RTRIM(p.def39)), '') IS NOT NULL";
+    } else if (solution) {
+      whereClause += " AND LTRIM(RTRIM(p.def39)) = @solution";
+      params.push({ name: "solution", value: solution, type: sql.NVarChar(1) });
     }
 
     const query = `
@@ -327,7 +350,6 @@ async function upsertSolution({
   let stageStart = Date.now();
   try {
     const pool = await getBIPool();
-
     stage = "checkHasActualHandling";
     stageStart = Date.now();
     console.log("[Save Solution] Bắt đầu kiểm tra actual handling", logContext);
@@ -406,9 +428,7 @@ async function upsertSolution({
 async function cancelSolution({ tempReceiptNo, tempReceiptId }) {
   try {
     const pool = await getBIPool();
-
     const hasActual = await checkHasActualHandling(pool, tempReceiptNo, tempReceiptId);
-
     if (hasActual) {
       const error = new Error('Cannot cancel solution: this record already has actual handling data (exported).');
       error.statusCode = 403;
