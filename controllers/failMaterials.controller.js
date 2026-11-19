@@ -23,17 +23,39 @@ async function getFailMaterials(req, res) {
 /*
   GET /api/fail-materials/paginated
   Lấy danh sách FAIL materials với phân trang
-  Query params: page, limit, search, date
+  Query params: page, limit, search, date (legacy), startDate, endDate, solution
 */
 async function getFailMaterialsPaginated(req, res) {
   try {
-    const { page = 1, limit = 50, search = "", date = "" } = req.query;
+    const { page = 1, limit = 50, search = "", date = "", solution = "" } = req.query;
+    const startDate = req.query.startDate || date;
+    const endDate = req.query.endDate || startDate;
+    const isValidDate = (value) => {
+      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+      const parsed = new Date(`${value}T00:00:00Z`);
+      return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value
+        && value >= "0001-01-01" && value < "9999-12-31";
+    };
+    if ((startDate && !isValidDate(startDate)) || (endDate && !isValidDate(endDate))
+      || (!startDate && endDate) || (startDate && endDate < startDate)) {
+      return res.status(400).json({ success: false, message: "Invalid date range" });
+    }
+
+    if (!["", "pending", "has_solution", "a", "b", "c", "d", "e"].includes(solution)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid solution filter",
+      });
+    }
 
     const result = await failMaterialsService.getFailMaterialsPaginated({
       page: parseInt(page, 10),
       limit: parseInt(limit, 10),
       search,
       date,
+      startDate,
+      endDate,
+      solution,
     });
 
     res.json({
