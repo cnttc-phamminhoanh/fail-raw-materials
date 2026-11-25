@@ -309,7 +309,7 @@ const SOLUTIONS = [
   function renderHead() {
     const groupLabels = {
       material: "Material / Failure",
-      solution: "Solution (Saler)",
+      solution: "Solution (Purchasing)",
       actual: "Actual Handling (WH)",
     };
     const groupClass = {
